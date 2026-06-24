@@ -58,7 +58,8 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
         owners: [],
         status: '',
         levels: [],
-        search: ''
+        search: '',
+        year: ''
     };
 
     let tablePage = 1;
@@ -67,6 +68,7 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
     // สกัดข้อมูลตัวเลือกฟิลเตอร์
     const uniqueModules = [...new Set(rawRecords.map(r => getRecordModule(r)).filter(Boolean))].sort();
     const uniqueOwners = [...new Set(rawRecords.map(r => getRecordOwnerName(r)).filter(n => n && n !== 'undefined' && n !== 'null' && n !== 'ไม่ระบุ Owner'))].sort();
+    const uniqueYears = [...new Set(rawRecords.map(r => getRecordYear(r)).filter(Boolean))].sort();
 
     // เรนเดอร์โครงสร้าง Layout หลัก
     appInstance.contentDiv.innerHTML = `
@@ -82,7 +84,7 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
                     <p class="text-xs text-slate-400 mt-1">กรองและวิเคราะห์แผนงาน OFI</p>
                 </div>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full flex-1 max-w-4xl">
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 w-full flex-1 max-w-5xl">
                 <div>
                     <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">หมวด (Module)</label>
                     <select id="filter-module" class="w-full px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
@@ -117,6 +119,13 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
                         <option value="4">L4</option>
                         <option value="5">L5</option>
                         <option value="N/A">N/A</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">ปีประเมิน (Year)</label>
+                    <select id="filter-year" class="w-full px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                        <option value="">ทั้งหมด (All)</option>
+                        ${uniqueYears.map(y => `<option value="${y}">${y}</option>`).join('')}
                     </select>
                 </div>
             </div>
@@ -240,6 +249,7 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
 
             if (currentFilters.modules && currentFilters.modules.length > 0 && !currentFilters.modules.includes(rMod)) return false;
             if (currentFilters.owners && currentFilters.owners.length > 0 && !currentFilters.owners.includes(rOwner)) return false;
+            if (currentFilters.year && getRecordYear(r) !== currentFilters.year) return false;
             
             if (currentFilters.status) {
                 if (currentFilters.status === 'done') {
@@ -537,6 +547,7 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
     const filterOwn = document.getElementById('filter-owner');
     const filterStat = document.getElementById('filter-status');
     const filterLvl = document.getElementById('filter-level');
+    const filterYr = document.getElementById('filter-year');
     const filterSrc = document.getElementById('filter-search');
     const resetBtn = document.getElementById('filter-reset-btn');
 
@@ -545,6 +556,7 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
         currentFilters.owners = filterOwn.value ? [filterOwn.value] : [];
         currentFilters.status = filterStat.value;
         currentFilters.levels = filterLvl.value ? [filterLvl.value] : [];
+        currentFilters.year = filterYr.value;
         currentFilters.search = filterSrc.value.trim();
         tablePage = 1;
         updateDashboard();
@@ -569,6 +581,7 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
     filterOwn.addEventListener('change', handleFilterChange);
     filterStat.addEventListener('change', handleFilterChange);
     filterLvl.addEventListener('change', handleFilterChange);
+    filterYr.addEventListener('change', handleFilterChange);
     filterSrc.addEventListener('input', handleSearchInput);
 
     resetBtn.addEventListener('click', () => {
@@ -576,8 +589,9 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
         filterOwn.value = '';
         filterStat.value = '';
         filterLvl.value = '';
+        filterYr.value = '';
         filterSrc.value = '';
-        currentFilters = { modules: [], owners: [], status: '', levels: [], search: '' };
+        currentFilters = { modules: [], owners: [], status: '', levels: [], search: '', year: '' };
         tablePage = 1;
         updateDashboard();
     });

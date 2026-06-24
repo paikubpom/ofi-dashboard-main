@@ -45,7 +45,8 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
         owners: ownerName ? [ownerName] : [],
         status: '',
         levels: [],
-        search: ''
+        search: '',
+        year: ''
     };
 
     let tablePage = 1;
@@ -55,6 +56,7 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
     const modulesList = [...new Set(rawRecords.map(r => getRecordModule(r)).filter(Boolean))].sort();
     const ownersList = [...new Set(rawRecords.map(r => getRecordOwnerName(r)).filter(Boolean))].sort();
     const levelsList = [...new Set(rawRecords.map(r => r.ofiLevel).filter(Boolean))].sort();
+    const yearsList = [...new Set(rawRecords.map(r => getRecordYear(r)).filter(Boolean))].sort();
 
     // ประกอบโครงสร้าง HTML พื้นฐาน (ฟิลเตอร์ + กริดกราฟ + ตารางข้อมูลดิบ)
     appInstance.contentDiv.innerHTML = `
@@ -62,39 +64,52 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
             ${appInstance.getKpiHtml()}
         </div>
 
-        <!-- 2. แผงควบคุมและฟิลเตอร์อัจฉริยะ (Smart Control Panel) -->
-        <div class="glass-card p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 animate-fade-in-up">
-            <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-                <span class="text-xs font-black text-[#00508F] flex items-center gap-1"><span class="text-sm">⚙️</span> คัดกรอง:</span>
-                
-                <div class="relative shrink-0 w-full sm:w-auto">
-                    <select id="filter-module" class="w-full sm:w-auto appearance-none bg-white border border-slate-200 px-4 py-1.5 pr-8 text-xs font-bold text-slate-700 rounded-xl outline-none focus:border-blue-400 transition cursor-pointer shadow-sm">
-                        <option value="">ทุกหมวดงาน (Modules)</option>
+        <!-- 2. แถบตัวกรองข้อมูลอัจฉริยะ (Interactive Filters) -->
+        <div class="glass-card p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col lg:flex-row gap-4 items-center justify-between mb-6 animate-fade-in-up">
+            <div class="flex items-center gap-3 w-full lg:w-auto shrink-0">
+                <span class="text-2xl">🔍</span>
+                <div>
+                    <h4 class="text-sm font-bold text-slate-800">ตัวกรองข้อมูล (Filters)</h4>
+                    <p class="text-xs text-slate-400 mt-1">กรองและวิเคราะห์แผนงาน OFI</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 w-full flex-1 max-w-5xl">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">หมวด (Module)</label>
+                    <select id="filter-module" class="w-full px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                        <option value="">ทั้งหมด (All)</option>
                         ${modulesList.map(m => `<option value="${m}">${m}</option>`).join('')}
                     </select>
                 </div>
-
-                <div class="relative shrink-0 w-full sm:w-auto">
-                    <select id="filter-owner" class="w-full sm:w-auto appearance-none bg-white border border-slate-200 px-4 py-1.5 pr-8 text-xs font-bold text-slate-700 rounded-xl outline-none focus:border-blue-400 transition cursor-pointer shadow-sm">
-                        <option value="">ผู้รับผิดชอบทั้งหมด</option>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">ผู้ดูแล (Owner)</label>
+                    <select id="filter-owner" class="w-full px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                        <option value="">ทั้งหมด (All)</option>
                         ${ownersList.map(o => `<option value="${o}" ${o === ownerName ? 'selected' : ''}>${o}</option>`).join('')}
                     </select>
                 </div>
-
-                <div class="relative shrink-0 w-full sm:w-auto">
-                    <select id="filter-status" class="w-full sm:w-auto appearance-none bg-white border border-slate-200 px-4 py-1.5 pr-8 text-xs font-bold text-slate-700 rounded-xl outline-none focus:border-blue-400 transition cursor-pointer shadow-sm">
-                        <option value="">ทุกสถานะ (Status)</option>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">สถานะ (Status)</label>
+                    <select id="filter-status" class="w-full px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                        <option value="">ทั้งหมด (All)</option>
                         <option value="progress">In Progress</option>
                         <option value="done">Done / Qualified</option>
                         <option value="delayed">Delayed</option>
                         <option value="not started">Not Started</option>
                     </select>
                 </div>
-
-                <div class="relative shrink-0 w-full sm:w-auto">
-                    <select id="filter-level" class="w-full sm:w-auto appearance-none bg-white border border-slate-200 px-4 py-1.5 pr-8 text-xs font-bold text-slate-700 rounded-xl outline-none focus:border-blue-400 transition cursor-pointer shadow-sm">
-                        <option value="">ทุกระดับความยาก</option>
-                        ${levelsList.map(l => `<option value="${l}">${l}</option>`).join('')}
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">ระดับความยาก (Level)</label>
+                    <select id="filter-level" class="w-full px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                        <option value="">ทั้งหมด (All)</option>
+                        ${levelsList.map(l => `<option value="${l}">L${l}</option>`).join('')}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">ปีประเมิน (Year)</label>
+                    <select id="filter-year" class="w-full px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                        <option value="">ทั้งหมด (All)</option>
+                        ${yearsList.map(y => `<option value="${y}">${y}</option>`).join('')}
                     </select>
                 </div>
             </div>
@@ -218,6 +233,9 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
             }
             if (currentFilters.levels.length > 0) {
                 if (!currentFilters.levels.includes(r.ofiLevel)) return false;
+            }
+            if (currentFilters.year) {
+                if (getRecordYear(r) !== currentFilters.year) return false;
             }
             if (currentFilters.search) {
                 const searchQ = currentFilters.search.toLowerCase();
@@ -362,6 +380,7 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
     const filterOwn = document.getElementById('filter-owner');
     const filterStat = document.getElementById('filter-status');
     const filterLvl = document.getElementById('filter-level');
+    const filterYr = document.getElementById('filter-year');
     const filterSrc = document.getElementById('filter-search');
     const resetBtn = document.getElementById('filter-reset-btn');
 
@@ -370,6 +389,7 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
         currentFilters.owners = filterOwn.value ? [filterOwn.value] : [];
         currentFilters.status = filterStat.value;
         currentFilters.levels = filterLvl.value ? [filterLvl.value] : [];
+        currentFilters.year = filterYr.value;
         currentFilters.search = filterSrc.value.trim();
         tablePage = 1;
         updateDashboard();
@@ -393,6 +413,7 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
     filterOwn.addEventListener('change', handleFilterChange);
     filterStat.addEventListener('change', handleFilterChange);
     filterLvl.addEventListener('change', handleFilterChange);
+    filterYr.addEventListener('change', handleFilterChange);
     filterSrc.addEventListener('input', handleSearchInput);
 
     resetBtn.addEventListener('click', () => {
@@ -400,8 +421,9 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
         filterOwn.value = ownerName;
         filterStat.value = '';
         filterLvl.value = '';
+        filterYr.value = '';
         filterSrc.value = '';
-        currentFilters = { modules: [], owners: ownerName ? [ownerName] : [], status: '', levels: [], search: '' };
+        currentFilters = { modules: [], owners: ownerName ? [ownerName] : [], status: '', levels: [], search: '', year: '' };
         tablePage = 1;
         updateDashboard();
         tableBody.querySelectorAll('tr').forEach(r => {
