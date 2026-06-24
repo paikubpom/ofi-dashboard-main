@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OFI Gateway - เข้าสู่ระบบ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+Thai:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/input.css">
+    <style>
+        body { font-family: 'Inter', 'Noto Sans Thai', sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4 bg-slate-900">
+
+    <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-100 animate-fade-in-up">
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">🚀</div>
+            <h2 class="text-2xl font-bold text-slate-800">OFI Analytics Center</h2>
+            <p class="text-xs text-slate-400 mt-1">กรุณาเลือกสิทธิ์เพื่อเข้าสู่หน้าแดชบอร์ดเฉพาะทาง</p>
+        </div>
+        
+        <div class="space-y-4">
+            <button onclick="goToRole('executive')" class="w-full p-4 border border-slate-200 rounded-2xl hover:bg-slate-50 text-left transition-all flex items-center gap-4 group hover:border-blue-400">
+                <span class="text-2xl group-hover:scale-110 transition-transform">👑</span>
+                <div><p class="font-bold text-slate-700">ผู้บริหาร (Executive View)</p></div>
+            </button>
+            
+            <button onclick="goToRole('auditor')" class="w-full p-4 border border-slate-200 rounded-2xl hover:bg-slate-50 text-left transition-all flex items-center gap-4 group hover:border-purple-400">
+                <span class="text-2xl group-hover:scale-110 transition-transform">🔍</span>
+                <div><p class="font-bold text-slate-700">ผู้ตรวจสอบ (Auditor View)</p></div>
+            </button>
+            
+            <div class="p-4 border border-slate-200 rounded-2xl bg-slate-50/50">
+                <div class="flex items-center gap-4 mb-3">
+                    <span class="text-2xl">⚙️</span>
+                    <div><p class="font-bold text-slate-700">เจ้าของกระบวนการ (Owner View)</p></div>
+                </div>
+                <select id="owner-select" class="w-full p-2.5 border border-slate-300 rounded-xl mb-3 bg-white text-sm outline-none"></select>
+                <button onclick="goToOwner()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold text-sm transition-colors">เข้าสู่ระบบกระบวนการ</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.location.origin;
+        
+        window.onload = async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/owners`);
+                const json = await res.json();
+                document.getElementById('owner-select').innerHTML = json.data.map(o => `<option value="${o.id}">${o.nameThai}</option>`).join('');
+                
+                // ระบบรองรับ URL Deep Linking เปลี่ยนหน้าให้อัตโนมัติหากมีพารามิเตอร์แปะมา
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('role')) goToRole(urlParams.get('role'));
+                else if (urlParams.get('owner')) window.location.href = `owner.html?owner=${urlParams.get('owner')}`;
+            } catch (e) { console.error("API Connection Error:", e); }
+        };
+
+        function goToRole(role) { window.location.href = `${role}.html`; }
+        function goToOwner() { const id = document.getElementById('owner-select').value; window.location.href = `owner.html?owner=${id}`; }
+    </script>
+</body>
+</html>

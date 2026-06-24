@@ -1,0 +1,32 @@
+# Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Node dependencies
+node_modules/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Build output
+dist/
+.vite/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Excel temporary / lock files
+~$*.xlsx
+~$*.xls
+
+# Local Database Cache
+data/ofi_data.db
+data/ofi_database.db
+data/published_data.json
+data/master_metadata.json

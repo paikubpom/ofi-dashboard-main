@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Dashboard - PTT OFI System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+Thai:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/input.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { 
+            font-family: 'Inter', 'Noto Sans Thai', sans-serif; 
+            background: #f1f5f9;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        /* Liquid Background morphing blobs */
+        .bg-blob-1 {
+            position: absolute;
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, rgba(139, 92, 246, 0) 70%);
+            top: -150px;
+            left: -150px;
+            z-index: -1;
+            animation: liquid-blob-1 25s infinite ease-in-out alternate;
+        }
+        .bg-blob-2 {
+            position: absolute;
+            width: 900px;
+            height: 900px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0) 70%);
+            bottom: -200px;
+            right: -200px;
+            z-index: -1;
+            animation: liquid-blob-2 30s infinite ease-in-out alternate;
+        }
+        .bg-blob-3 {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0) 70%);
+            top: 35%;
+            left: 25%;
+            z-index: -1;
+            animation: liquid-blob-3 20s infinite ease-in-out alternate;
+        }
+        .bg-blob-4 {
+            position: absolute;
+            width: 650px;
+            height: 650px;
+            background: radial-gradient(circle, rgba(236, 72, 153, 0.08) 0%, rgba(236, 72, 153, 0) 70%);
+            top: 15%;
+            right: 15%;
+            z-index: -1;
+            animation: liquid-blob-1 22s infinite ease-in-out alternate-reverse;
+        }
+
+        @keyframes liquid-blob-1 {
+            0% { transform: translate(0px, 0px) scale(1) rotate(0deg); border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%; }
+            33% { transform: translate(100px, 80px) scale(1.15) rotate(120deg); border-radius: 70% 30% 52% 48% / 60% 40% 60% 40%; }
+            66% { transform: translate(-50px, 150px) scale(0.9) rotate(240deg); border-radius: 28% 72% 35% 65% / 35% 65% 35% 65%; }
+            100% { transform: translate(0px, 0px) scale(1) rotate(360deg); border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%; }
+        }
+        @keyframes liquid-blob-2 {
+            0% { transform: translate(0px, 0px) scale(1) rotate(0deg); border-radius: 50% 50% 30% 70% / 50% 60% 40% 50%; }
+            33% { transform: translate(-80px, -120px) scale(0.9) rotate(-120deg); border-radius: 30% 70% 70% 30% / 50% 30% 70% 50%; }
+            66% { transform: translate(120px, -50px) scale(1.1) rotate(-240deg); border-radius: 70% 30% 30% 70% / 30% 70% 40% 60%; }
+            100% { transform: translate(0px, 0px) scale(1) rotate(-360deg); border-radius: 50% 50% 30% 70% / 50% 60% 40% 50%; }
+        }
+        @keyframes liquid-blob-3 {
+            0% { transform: translate(0px, 0px) scale(1); border-radius: 60% 40% 40% 60% / 50% 50% 50% 50%; }
+            50% { transform: translate(80px, -50px) scale(1.15); border-radius: 40% 60% 60% 40% / 60% 40% 60% 40%; }
+            100% { transform: translate(0px, 0px) scale(1); border-radius: 60% 40% 40% 60% / 50% 50% 50% 50%; }
+        }
+
+        /* Liquid Glass Cards */
+        .glass-card { 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.22) 100%); 
+            backdrop-filter: blur(24px) saturate(120%); 
+            -webkit-backdrop-filter: blur(24px) saturate(120%); 
+            border: 1px solid rgba(255, 255, 255, 0.65); 
+            box-shadow: 0 8px 32px 0 rgba(31, 41, 55, 0.04), inset 0 1px 0 0 rgba(255, 255, 255, 0.2); 
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
+        }
+        .glass-card:hover { 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.3) 100%); 
+            transform: translateY(-5px) scale(1.005); 
+            border-color: rgba(139, 92, 246, 0.35); 
+            box-shadow: 0 20px 40px 0 rgba(139, 92, 246, 0.06), inset 0 1px 0 0 rgba(255, 255, 255, 0.3); 
+        }
+    </style>
+</head>
+<body>
+    <!-- Liquid Background Container (Prevents overflow) -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none z-[-1]">
+        <div class="bg-blob-1"></div>
+        <div class="bg-blob-2"></div>
+        <div class="bg-blob-3"></div>
+        <div class="bg-blob-4"></div>
+    </div>
+ 
+    <!-- 🏗️ โครงสร้างกล่องพ่นสีจัดแสดงผลหลักประจำหน้าจอ -->
+    <div class="max-w-[95%] lg:max-w-[92%] 2xl:max-w-[90%] mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <!-- แถบเมนูด้านบนสุด (Global Header) -->
+        <div id="global-header" class="mb-6"></div>
+        
+        <!-- กล่องแจ้งเตือนความเสี่ยง (Red Flags Container) -->
+        <div id="red-flags-container" class="mb-6"></div>
+        
+        <!-- พื้นที่แสดงผลกราฟและข้อมูลหลัก (App Content Area) -->
+        <div id="app-content"></div>
+
+    </div>
+
+    <!-- 🌟 ตัวเชื่อมสคริปต์ปราบแคชเวอร์ชัน 3 ปิดแท็กสมบูรณ์แบบ -->
+    <script type="module" src="js/apps/owner_app.js"></script>
+</body>
+</html>

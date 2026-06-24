@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OFI Smart Dashboard</title>
+    
+    <link href="output.css" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #f8fafc; }
+        .chart-container { position: relative; height: 260px; width: 100%; }
+        .metric-card { transition: all 0.2s ease-in-out; }
+        .metric-card:hover { transform: translateY(-2px); }
+    </style>
+</head>
+<body class="text-gray-800 flex h-screen overflow-hidden">
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="fixed inset-0 bg-slate-900/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-100">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">🚀</div>
+                <h2 class="text-2xl font-bold text-slate-800">เข้าสู่ระบบ OFI Center</h2>
+                <p class="text-slate-500 text-sm mt-1">เลือกบทบาทเพื่อเข้าถึงข้อมูลที่ปรับแต่งเฉพาะคุณ</p>
+            </div>
+            <div class="space-y-4">
+                <button onclick="login('executive')" class="w-full p-4 border border-slate-200 rounded-2xl hover:bg-slate-50 hover:border-blue-300 text-left transition-all flex items-center gap-4 group">
+                    <span class="text-2xl group-hover:scale-110 transition-transform">📈</span>
+                    <div><p class="font-bold text-slate-700">ผู้บริหาร (Executive)</p><p class="text-xs text-slate-400">ดูภาพรวมและสุขภาพองค์กร</p></div>
+                </button>
+                <button onclick="login('auditor')" class="w-full p-4 border border-slate-200 rounded-2xl hover:bg-rose-50 hover:border-rose-300 text-left transition-all flex items-center gap-4 group">
+                    <span class="text-2xl group-hover:scale-110 transition-transform">🔎</span>
+                    <div><p class="font-bold text-slate-700">ผู้ตรวจสอบ (Auditor)</p><p class="text-xs text-slate-400">ดูความเสี่ยงและแหล่งที่มา สคร.</p></div>
+                </button>
+                <div class="p-4 border border-slate-200 rounded-2xl bg-slate-50/50 relative">
+                    <div class="flex items-center gap-4 mb-3">
+                        <span class="text-2xl">👤</span>
+                        <div><p class="font-bold text-slate-700">เจ้าของขั้นตอน (Process Owner)</p><p class="text-xs text-slate-400">ดูงานที่ต้องดำเนินการ</p></div>
+                    </div>
+                    <select id="owner-select" class="w-full p-2.5 border border-slate-300 rounded-xl mb-3 bg-white text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all"></select>
+                    <button onclick="loginOwner()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold transition-colors text-sm">เข้าสู่ระบบเจ้าของขั้นตอน</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD -->
+    <div id="main-dashboard" class="flex-1 overflow-y-auto hidden">
+        <div class="max-w-7xl mx-auto p-6 lg:p-8 space-y-6">
+            
+            <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-200/60">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-3">
+                        <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+                        OFI Intelligence Center
+                    </h1>
+                    <p class="text-slate-500 text-sm mt-1">มุมมองการนำเสนอ: <span id="display-role" class="font-bold text-blue-600 uppercase bg-blue-50 px-2 py-0.5 rounded-md ml-1">-</span></p>
+                </div>
+                <button onclick="logout()" class="px-5 py-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 font-semibold text-sm transition-colors">ออกจากระบบ</button>
+            </header>
+
+            <div id="app-content" class="space-y-6"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:8000';
+
+        // --- [A] DATA SERVICE (คำนวณและจัดรูปแบบสถิติขั้นสูง) ---
+        class OFIDataService {
+            constructor(rawData) {
+                this.db = rawData || {};
+                // ใส่ ตัวป้องกันเซฟโซนกันค่าว่างพ่น Error
+                this.ofis = rawData?.ofiImprovements || [];
+                this.departments = rawData?.reference?.departments || [];
+            }
+
+    getSummaryKPIs() {
+        const total = this.ofis.length;
+        let doneCount = 0;
+        let delayedCount = 0;
+
+        this.ofis.forEach(o => {
+            if (!o) return; // ข้ามหากก้อนข้อมูลมีปัญหา
+            const status = o.overallStatus || o.phases?.['phase-plan']?.status;
+            if (status === 'Done' || status === 'Qualified') doneCount++;
+            if (status === 'Delayed') delayedCount++;
+        });
+
+        return {
+            total,
+            processCount: this.ofis.filter(o => o?.typeOfOFI === 'Process').length,
+            resultCount: this.ofis.filter(o => o?.typeOfOFI === 'Result').length,
+            criticalCount: this.ofis.filter(o => ['L4', 'L5'].includes(o?.ofiLevel)).length,
+            successRate: total ? Math.round((doneCount / total) * 100) : 0,
+            delayedCount
+                };
+            }
+
+            // คำนวณสถิติรายแผนกแยกตามระดับความสำคัญ (สำหรับทำ Stacked Bar Chart)
+            getDepartmentAnalysis() {
+                const labels = [];
+                const l123Series = [];
+                const l45Series = [];
+
+                this.departments.forEach(dept => {
+                    labels.push(dept.shortNameThai);
+                    let normalLoad = 0;
+                    let criticalLoad = 0;
+
+                    this.ofis.filter(o => o.departmentIds?.includes(dept.id)).forEach(o => {
+                        if (['L4', 'L5'].includes(o.ofiLevel)) criticalLoad++;
+                        else normalLoad++;
+                    });
+
+                    l123Series.push(normalLoad);
+                    l45Series.push(criticalLoad);
+                });
+
+                return { labels, normal: l123Series, critical: l45Series };
+            }
+
+            // คำนวณสัดส่วนของระดับขีดความสามารถ (L1 - L5)
+            getLevelDistribution() {
+                const counts = { L1: 0, L2: 0, L3: 0, L4: 0, L5: 0 };
+                this.ofis.forEach(o => { if(counts[o.ofiLevel] !== undefined) counts[o.ofiLevel]++; });
+                return Object.values(counts);
+            }
+        }
+
+        // --- [B] DASHBOARD APP (วาดหน้าจอและกราฟเชิงลึกแยกตามสิทธิ์) ---
+        class DashboardApp {
+            constructor(dataService) {
+                this.data = dataService;
+                this.contentDiv = document.getElementById('app-content');
+                this.activeCharts = [];
+            }
+
+            renderView(role) {
+                if (role === 'executive') {
+                    this.renderExecutiveView();
+                } else if (role === 'owner') {
+                    this.renderOwnerView();
+                } else if (role === 'auditor') {
+                    this.renderAuditorView();
+                }
+            }
+
+            clearOldViews() {
+                this.activeCharts.forEach(c => c.destroy());
+                this.activeCharts = [];
+                this.contentDiv.innerHTML = '';
+            }
+
+            // หยอดโครงสร้างการ์ดสถิติ (KPI Blocks) ด้านบนของทุกหน้า
+            renderKPIBlock(kpi) {
+                return `
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="metric-card bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex justify-between items-center">
+                            <div><p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">ปริมาณเคส OFI ทั้งหมด</p><p class="text-3xl font-bold text-slate-800 mt-1">${kpi.total}</p></div>
+                            <div class="p-3 bg-blue-50 text-blue-600 rounded-xl font-bold text-xl">📋</div>
+                        </div>
+                        <div class="metric-card bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex justify-between items-center">
+                            <div><p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">อัตราความสำเร็จร่วม</p><p class="text-3xl font-bold text-emerald-600 mt-1">${kpi.successRate}%</p></div>
+                            <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl font-bold text-xl">📈</div>
+                        </div>
+                        <div class="metric-card bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex justify-between items-center">
+                            <div><p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">งานวิกฤตความเสี่ยงสูง (L4-L5)</p><p class="text-3xl font-bold text-amber-600 mt-1">${kpi.criticalCount}</p></div>
+                            <div class="p-3 bg-amber-50 text-amber-500 rounded-xl font-bold text-xl">🔥</div>
+                        </div>
+                        <div class="metric-card bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex justify-between items-center">
+                            <div><p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">รายการที่ล่าช้า (Delayed)</p><p class="text-3xl font-bold text-rose-600 mt-1">${kpi.delayedCount}</p></div>
+                            <div class="p-3 bg-rose-50 text-rose-500 rounded-xl font-bold text-xl">⏳</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 📊 1. ตัววิเคราะห์ระดับสูงสำหรับ EXECUTIVE (เน้นโหลดงานภาพรวมและการทำงานรายฝ่าย)
+            renderExecutiveView() {
+                this.clearOldViews();
+                const kpi = this.data.getSummaryKPIs();
+                const deptData = this.data.getDepartmentAnalysis();
+
+                this.contentDiv.innerHTML = `
+                    ${this.renderKPIBlock(kpi)}
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm lg:col-span-2">
+                            <h3 class="font-bold text-slate-800 text-base mb-1">สัดส่วนภาระงานและระดับความวิกฤตรายฝ่าย</h3>
+                            <p class="text-xs text-slate-400 mb-4">วิเคราะห์หาคอขวดสะสมในแต่ละสายงานหน่วยงานหลัก</p>
+                            <div class="chart-container"><canvas id="deptStackedChart"></canvas></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                            <h3 class="font-bold text-slate-800 text-base mb-1">โฟกัสเชิงกลยุทธ์ (Strategic Focus)</h3>
+                            <p class="text-xs text-slate-400 mb-4">สัดส่วนการเน้นแก้กระบวนการ (Process) เทียบกับผลลัพธ์ (Result)</p>
+                            <div class="chart-container flex items-center justify-center"><canvas id="typePieChart"></canvas></div>
+                        </div>
+                    </div>
+                `;
+
+                // Chart: Stacked Bar
+                const c1 = new Chart(document.getElementById('deptStackedChart').getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: deptData.labels,
+                        datasets: [
+                            { label: 'งานทั่วไป (L1-L3)', data: deptData.normal, backgroundColor: '#3b82f6', borderRadius: 4 },
+                            { label: 'งานวิกฤต (L4-L5)', data: deptData.critical, backgroundColor: '#f59e0b', borderRadius: 4 }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } } }
+                });
+
+                // Chart: Pie
+                const c2 = new Chart(document.getElementById('typePieChart').getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Process Focus', 'Result Focus'],
+                        datasets: [{ data: [kpi.processCount, kpi.resultCount], backgroundColor: ['#0284c7', '#10b981'], borderWhidth: 0 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                });
+
+                this.activeCharts.push(c1, c2);
+            }
+
+            // 👤 2. ตัววิเคราะห์สำหรับเจ้าภาพ OWNER (เน้นสถานะงานและตาราง Action Item ที่ต้องลงมือทำ)
+            renderOwnerView() {
+                this.clearOldViews();
+                const kpi = this.data.getSummaryKPIs();
+                const levelDist = this.data.getLevelDistribution();
+
+                let taskRows = this.data.ofis.map(o => `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50/80 transition-colors text-sm">
+                        <td class="p-4 font-bold text-slate-700">${o.enablerCode}</td>
+                        <td class="p-4 text-slate-600 max-w-md truncate">${o.ofiText}</td>
+                        <td class="p-4"><span class="px-2.5 py-1 text-xs font-bold rounded-md ${o.ofiLevel === 'L5' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}">${o.ofiLevel}</span></td>
+                        <td class="p-4"><span class="px-2.5 py-1 text-xs font-medium rounded-full ${o.overallStatus === 'Done' || o.overallStatus === 'Qualified' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${o.overallStatus || 'In progress'}</span></td>
+                    </tr>
+                `).join('');
+
+                if (!taskRows) taskRows = '<tr><td colspan="4" class="p-8 text-center text-slate-400">🎉 ยินดีด้วย คุณไม่มีภาระงานตกค้างในระบบ</td></tr>';
+
+                this.contentDiv.innerHTML = `
+                    ${this.renderKPIBlock(kpi)}
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm lg:col-span-2 overflow-hidden">
+                            <h3 class="font-bold text-slate-800 text-sm mb-4">📝 ใบงานปฏิบัติการในความรับผิดชอบของคุณ</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead><tr class="bg-slate-50 text-slate-400 text-xs font-bold uppercase tracking-wider border-b"><th class="p-3">Code</th><th class="p-3">หัวข้อการปรับปรุง</th><th class="p-3">ระดับ</th><th class="p-3">สถานะ</th></tr></thead>
+                                    <tbody class="divide-y divide-slate-100">${taskRows}</tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                            <h3 class="font-bold text-slate-800 text-sm mb-4">🎯 สัดส่วนจำแนกตามความยากระดับงาน (Maturity Levels)</h3>
+                            <div class="chart-container"><canvas id="levelRadarChart"></canvas></div>
+                        </div>
+                    </div>
+                `;
+
+                // Chart: Radar/Polar Area สำหรับดูระดับเลเวลความยากของงาน
+                const c3 = new Chart(document.getElementById('levelRadarChart').getContext('2d'), {
+                    type: 'polarArea',
+                    data: {
+                        labels: ['L1', 'L2', 'L3', 'L4', 'L5'],
+                        datasets: [{ data: levelDist, backgroundColor: ['#e2e8f0', '#cbd5e1', '#94a3b8', '#f59e0b', '#ef4444'] }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { r: { ticks: { display: false } } } }
+                });
+                this.activeCharts.push(c3);
+            }
+
+            // 🔎 3. หน้าสำหรับตรวจสอบความเสี่ยงยืดหยุ่นสูงของ AUDITOR
+            renderAuditorView() {
+                this.clearOldViews();
+                const kpi = this.data.getSummaryKPIs();
+                
+                this.contentDiv.innerHTML = `
+                    ${this.renderKPIBlock(kpi)}
+                    <div class="grid grid-cols-1 gap-6">
+                        <div class="bg-slate-900 text-slate-200 p-6 rounded-2xl shadow-xl">
+                            <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+                                <h3 class="font-mono text-emerald-400 font-bold">🕵️‍♂️ Auditor Real-time Data Payload Inspection</h3>
+                                <span class="bg-emerald-500/10 text-emerald-400 text-xs px-2.5 py-1 rounded font-mono">Row-Level Security: PASS</span>
+                            </div>
+                            <pre class="text-xs font-mono overflow-auto h-96 leading-relaxed text-slate-300 bg-slate-950 p-4 rounded-xl shadow-inner">${JSON.stringify(this.data.db.ofiImprovements, null, 2)}</pre>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // --- [C] SSO LOGIN & CONNECTOR PIPELINE ---
+        window.onload = async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/owners`);
+                const json = await res.json();
+                const select = document.getElementById('owner-select');
+                select.innerHTML = json.data.map(o => `<option value="${o.id}">${o.nameThai} (${o.shortPosition})</option>`).join('');
+            } catch (err) {
+                console.error("API Gateway ไม่ตอบสนอง ตรวจสอบการเปิด Uvicorn:", err);
+            }
+        };
+
+        function login(role) { fetchDashboardData(`Bearer ${role}`); }
+        function loginOwner() { fetchDashboardData(`Bearer owner:${document.getElementById('owner-select').value}`); }
+        function logout() { location.reload(); }
+
+        async function fetchDashboardData(token) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/dashboard-data`, { method: 'GET', headers: { 'Authorization': token } });
+
+                // 🌟 เพิ่มจุดตรวจสอบสถานะการตอบกลับจาก Python
+                console.log("Backend Status:", response.status);
+
+                if (!response.ok) throw new Error("Access Denied");
+                const result = await response.json();
+                
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('main-dashboard').classList.remove('hidden');
+                document.getElementById('display-role').innerText = result.role;
+                
+                // เริ่มระบบประมวลผลโมเดลและวาดกราฟเชิงลึกทันที
+                const dataService = new OFIDataService(result.data);
+                const app = new DashboardApp(dataService);
+                app.renderView(result.role);
+
+            } catch (error) {
+                console.error("🔴 บั๊กตัวจริงที่ซ่อนอยู่คืออันนี้ครับ ->", error);
+                alert("สิทธิ์การเข้าถึงล้มเหลว หรือเซิร์ฟเวอร์หลังบ้านขัดข้อง!");
+            }
+        }
+    </script>
+</body>
+</html>

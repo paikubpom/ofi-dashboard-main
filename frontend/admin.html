@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - PTT OFI System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+Thai:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/input.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { 
+            font-family: 'Inter', 'Noto Sans Thai', sans-serif; 
+            background: #f1f5f9;
+            color: #334155;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        /* Liquid Background morphing blobs */
+        .bg-blob-1 {
+            position: absolute;
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, rgba(239, 68, 68, 0.12) 0%, rgba(239, 68, 68, 0) 70%);
+            top: -150px;
+            left: -150px;
+            z-index: -1;
+            animation: liquid-blob-1 25s infinite ease-in-out alternate;
+        }
+        .bg-blob-2 {
+            position: absolute;
+            width: 900px;
+            height: 900px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, rgba(168, 85, 247, 0) 70%);
+            bottom: -200px;
+            right: -200px;
+            z-index: -1;
+            animation: liquid-blob-2 30s infinite ease-in-out alternate;
+        }
+        .bg-blob-3 {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0) 70%);
+            top: 35%;
+            left: 25%;
+            z-index: -1;
+            animation: liquid-blob-3 20s infinite ease-in-out alternate;
+        }
+        .bg-blob-4 {
+            position: absolute;
+            width: 650px;
+            height: 650px;
+            background: radial-gradient(circle, rgba(236, 72, 153, 0.08) 0%, rgba(236, 72, 153, 0) 70%);
+            top: 15%;
+            right: 15%;
+            z-index: -1;
+            animation: liquid-blob-1 22s infinite ease-in-out alternate-reverse;
+        }
+
+        @keyframes liquid-blob-1 {
+            0% { transform: translate(0px, 0px) scale(1) rotate(0deg); border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%; }
+            33% { transform: translate(100px, 80px) scale(1.15) rotate(120deg); border-radius: 70% 30% 52% 48% / 60% 40% 60% 40%; }
+            66% { transform: translate(-50px, 150px) scale(0.9) rotate(240deg); border-radius: 28% 72% 35% 65% / 35% 65% 35% 65%; }
+            100% { transform: translate(0px, 0px) scale(1) rotate(360deg); border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%; }
+        }
+        @keyframes liquid-blob-2 {
+            0% { transform: translate(0px, 0px) scale(1) rotate(0deg); border-radius: 50% 50% 30% 70% / 50% 60% 40% 50%; }
+            33% { transform: translate(-80px, -120px) scale(0.9) rotate(-120deg); border-radius: 30% 70% 70% 30% / 50% 30% 70% 50%; }
+            66% { transform: translate(120px, -50px) scale(1.1) rotate(-240deg); border-radius: 70% 30% 30% 70% / 30% 70% 40% 60%; }
+            100% { transform: translate(0px, 0px) scale(1) rotate(-360deg); border-radius: 50% 50% 30% 70% / 50% 60% 40% 50%; }
+        }
+        @keyframes liquid-blob-3 {
+            0% { transform: translate(0px, 0px) scale(1); border-radius: 60% 40% 40% 60% / 50% 50% 50% 50%; }
+            50% { transform: translate(80px, -50px) scale(1.15); border-radius: 40% 60% 60% 40% / 60% 40% 60% 40%; }
+            100% { transform: translate(0px, 0px) scale(1); border-radius: 60% 40% 40% 60% / 50% 50% 50% 50%; }
+        }
+
+        /* Liquid Glass Cards */
+        .glass-card { 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.22) 100%); 
+            backdrop-filter: blur(24px) saturate(120%); 
+            -webkit-backdrop-filter: blur(24px) saturate(120%);
+            border: 1px solid rgba(255, 255, 255, 0.65); 
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.04), inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .glass-card:hover {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.3) 100%); 
+            transform: translateY(-5px) scale(1.005); 
+            border-color: rgba(239, 68, 68, 0.35);
+            box-shadow: 0 20px 40px 0 rgba(239, 68, 68, 0.06), inset 0 1px 0 0 rgba(255, 255, 255, 0.3);
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="antialiased selection:bg-blue-100 selection:text-blue-900">
+    <!-- Liquid Background Container (Prevents overflow) -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none z-[-1]">
+        <div class="bg-blob-1"></div>
+        <div class="bg-blob-2"></div>
+        <div class="bg-blob-3"></div>
+        <div class="bg-blob-4"></div>
+    </div>
+ 
+    <div class="max-w-[95%] lg:max-w-[92%] 2xl:max-w-[90%] mx-auto p-4 sm:p-6 lg:p-8">
+        <div id="global-header" class="mb-6"></div>
+
+        <div class="inline-flex p-1.5 bg-slate-200/50 backdrop-blur-md rounded-2xl mb-8 border border-white/60 shadow-inner">
+            <button id="tab-file-system" class="px-6 py-2.5 text-[13px] sm:text-sm font-bold text-[#00508F] bg-white rounded-xl shadow-sm transition-all duration-300 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" /></svg>
+                รายการไฟล์ในระบบ
+            </button>
+            <!-- <button id="tab-chart-builder" class="px-6 py-2.5 text-[13px] sm:text-sm font-medium text-slate-500 hover:text-slate-700 rounded-xl transition-all duration-300 flex items-center gap-2"> -->
+                <!-- <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg> -->
+                <!-- จัดการสิทธิ์การแสดงผลกราฟ -->
+            <!-- </button> -->
+        </div>
+
+        <div id="section-file-system" class="grid grid-cols-1 lg:grid-cols-3 gap-8 transition-opacity duration-500">
+            <div class="glass-card p-7 rounded-3xl lg:col-span-2">
+                <div class="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
+                    <h3 class="text-base font-bold text-slate-800 tracking-wide">รายการไฟล์ในระบบฐานข้อมูล</h3>
+                    <div class="flex items-center gap-4">
+                        <span id="last-sync-time" class="text-[11px] text-slate-400">กำลังโหลดข้อมูล...</span>
+                        
+                        <label class="flex items-center gap-2 text-xs font-bold text-slate-500 cursor-pointer hover:text-slate-700 transition select-none">
+                            <div class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="auto-sync-toggle" class="sr-only peer">
+                                <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 shadow-inner"></div>
+                            </div>
+                            Auto Sync
+                        </label>
+
+                        <button id="btn-delete-selected" disabled class="px-4 py-2 border-2 border-rose-100 text-rose-600 hover:border-rose-500 hover:bg-rose-50 disabled:opacity-30 disabled:cursor-not-allowed text-[11px] font-bold rounded-xl transition-all flex items-center gap-2">
+                            🗑️ ลบไฟล์ที่เลือก
+                        </button>
+                        <button id="manual-sync-btn" class="px-4 py-2 border-2 border-slate-200 text-slate-600 hover:border-[#00508F] hover:text-[#00508F] hover:bg-blue-50 text-[11px] font-bold rounded-xl transition-all flex items-center gap-2">
+                            🔄 ซิงก์ข้อมูล
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto min-h-[220px]">
+                    <table class="w-full text-left border-collapse text-[13px]">
+                        <thead>
+                            <tr class="text-slate-400 font-semibold border-b border-slate-100">
+                                <th class="py-3 px-4 w-12 text-center">
+                                    <input type="checkbox" id="select-all-files" class="w-4 h-4 text-blue-600 rounded border-slate-300 cursor-pointer focus:ring-0">
+                                </th>
+                                <th class="py-3 px-4 w-20">สถานะ</th>
+                                <th class="py-3 px-4">ชื่อไฟล์อ้างอิง</th>
+                                <th class="py-3 px-4">วันที่นำเข้า</th>
+                                <th class="py-3 px-4">แก้ไขล่าสุด</th>
+                                <th class="py-3 px-4 text-right w-24">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="file-list-body" class="divide-y divide-slate-50/80"></tbody>
+                    </table>
+                </div>
+                <div id="pagination-controls" class="mt-4 border-t border-slate-100 pt-4 pb-2"></div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="glass-card p-6 rounded-3xl hover:shadow-lg transition-shadow duration-300">
+                    <h3 class="text-[13px] font-bold text-slate-800 mb-3 flex items-center gap-2"><span class="text-blue-500">📤</span> นำเข้าข้อมูล (Upload)</h3>
+                    <div class="border-2 border-dashed border-slate-200 hover:border-blue-400 bg-slate-50/50 hover:bg-blue-50/50 rounded-2xl p-6 text-center transition-all cursor-pointer mb-4 group">
+                        <input type="file" id="file-upload" class="hidden" accept=".xlsx,.csv,.json" multiple>
+                        <label for="file-upload" class="cursor-pointer block">
+                            <div class="text-3xl mb-3 text-slate-300 group-hover:text-blue-400 transition-colors transform group-hover:-translate-y-1">📁</div>
+                            <span class="text-[12px] font-semibold text-slate-600 block">คลิก หรือลากไฟล์มาวาง</span>
+                            <span class="text-[10px] text-slate-400 mt-1 block">.xlsx, .csv, .json</span>
+                            <div id="file-name-display" class="mt-3 text-[11px] text-blue-600 font-semibold break-words"></div>
+                        </label>
+                    </div>
+                    <button id="upload-btn" disabled class="w-full py-2.5 bg-slate-800 disabled:bg-slate-300 text-white text-[12px] font-bold rounded-xl transition-all hover:bg-slate-700 shadow-md">
+                        ยืนยันการนำเข้า
+                    </button>
+                </div>
+
+                <div class="glass-card p-6 rounded-3xl space-y-4">
+                    <div>
+                        <h3 class="text-[13px] font-bold text-slate-800 mb-1 flex items-center gap-2"><span class="text-amber-500">🔎</span> ตรวจสอบมุมมอง</h3>
+                        <p class="text-[10px] text-slate-400">เปิดพรีวิวแดชบอร์ดตามสิทธิ์ผู้ใช้งาน</p>
+                    </div>
+                    <a href="/executive" target="_blank" class="flex justify-between items-center p-3.5 bg-white hover:bg-slate-50 rounded-xl transition-all text-xs font-bold text-slate-700 border border-slate-100 shadow-sm hover:shadow group">
+                        <span class="flex items-center gap-2">👑 Executive<br><span class="text-[9px] text-slate-400 font-medium">ภาพรวมระดับผู้บริหาร</span></span>
+                        <span class="text-slate-300 group-hover:text-amber-500 group-hover:translate-x-1 transition-transform">↗️</span>
+                    </a>
+                    <a href="/auditor" target="_blank" class="flex justify-between items-center p-3.5 bg-white hover:bg-slate-50 rounded-xl transition-all text-xs font-bold text-slate-700 border border-slate-100 shadow-sm hover:shadow group">
+                        <span class="flex items-center gap-2">🔍 Auditor<br><span class="text-[9px] text-slate-400 font-medium">ภาพรวมระดับผู้ตรวจสอบ</span></span>
+                        <span class="text-slate-300 group-hover:text-teal-500 group-hover:translate-x-1 transition-transform">↗️</span>
+                    </a>
+                    <div class="p-3.5 bg-white rounded-xl border border-slate-100 shadow-sm flex flex-col gap-2">
+                        <span class="text-xs font-bold text-slate-700 flex items-center gap-2">⚙️ Process Owner<br><span class="text-[9px] text-slate-400 font-medium">แดชบอร์ดรายบุคคล</span></span>
+                        <div class="flex gap-2 mt-1.5">
+                            <select id="owner-preview-select" class="flex-1 px-3 py-2 text-[11px] font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-blue-400 focus:bg-white transition-colors">
+                                <option value="">-- เลือกรายชื่อพนักงาน --</option>
+                            </select>
+                            <button id="btn-preview-owner" class="px-4 py-2 bg-slate-800 text-white text-[11px] font-bold rounded-lg hover:bg-slate-700 transition-colors shadow-sm">เปิด ↗️</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="section-chart-builder" class="hidden transition-opacity duration-500">
+            <div class="glass-card p-8 rounded-3xl">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 border-b border-slate-100 pb-5">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">⚙️ Dashboard Builder</h3>
+                        <p class="text-[12px] text-slate-500 mt-1 font-medium">จัดการสิทธิ์การมองเห็นโครงสร้างกราฟสำหรับแต่ละตำแหน่ง</p>
+                    </div>
+                    <button id="btn-save-chart-settings" class="mt-4 sm:mt-0 px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-bold rounded-xl transition-all shadow-md hover:shadow-lg flex items-center gap-2">
+                        💾 บันทึกสิทธิ์การแสดงผล
+                    </button>
+                </div>
+                <div id="chart-settings-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="text-xs text-slate-400 font-medium">⏳ กำลังโหลดโครงสร้างกราฟ...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/js/apps/admin_app.js"></script>
+</body>
+</html>

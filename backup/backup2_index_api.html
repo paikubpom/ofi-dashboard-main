@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OFI Smart Dashboard</title>
+    
+    <link href="output.css" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #f8fafc; }
+        .chart-container { position: relative; height: 260px; width: 100%; }
+        .metric-card { transition: all 0.2s ease-in-out; }
+        .metric-card:hover { transform: translateY(-2px); }
+    </style>
+</head>
+<body class="text-gray-800 flex h-screen overflow-hidden">
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="fixed inset-0 bg-slate-900/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-100">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">🚀</div>
+                <h2 class="text-2xl font-bold text-slate-800">เข้าสู่ระบบ OFI Center</h2>
+                <p class="text-slate-500 text-sm mt-1">เลือกบทบาทเพื่อเข้าถึงข้อมูลที่ปรับแต่งเฉพาะคุณ</p>
+            </div>
+            <div class="space-y-4">
+                <button onclick="login('executive')" class="w-full p-4 border border-slate-200 rounded-2xl hover:bg-slate-50 hover:border-blue-300 text-left transition-all flex items-center gap-4 group">
+                    <span class="text-2xl group-hover:scale-110 transition-transform">📈</span>
+                    <div><p class="font-bold text-slate-700">ผู้บริหาร (Executive)</p><p class="text-xs text-slate-400">ดูภาพรวมและสุขภาพองค์กร</p></div>
+                </button>
+                <button onclick="login('auditor')" class="w-full p-4 border border-slate-200 rounded-2xl hover:bg-rose-50 hover:border-rose-300 text-left transition-all flex items-center gap-4 group">
+                    <span class="text-2xl group-hover:scale-110 transition-transform">🔎</span>
+                    <div><p class="font-bold text-slate-700">ผู้ตรวจสอบ (Auditor)</p><p class="text-xs text-slate-400">ดูความเสี่ยงและแหล่งที่มา สคร.</p></div>
+                </button>
+                <div class="p-4 border border-slate-200 rounded-2xl bg-slate-50/50 relative">
+                    <div class="flex items-center gap-4 mb-3">
+                        <span class="text-2xl">👤</span>
+                        <div><p class="font-bold text-slate-700">เจ้าของขั้นตอน (Process Owner)</p><p class="text-xs text-slate-400">ดูงานที่ต้องดำเนินการ</p></div>
+                    </div>
+                    <select id="owner-select" class="w-full p-2.5 border border-slate-300 rounded-xl mb-3 bg-white text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all"></select>
+                    <button onclick="loginOwner()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold transition-colors text-sm">เข้าสู่ระบบเจ้าของขั้นตอน</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD -->
+    <div id="main-dashboard" class="flex-1 overflow-y-auto hidden">
+        <div class="max-w-7xl mx-auto p-6 lg:p-8 space-y-6">
+            
+            <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-200/60">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-3">
+                        <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+                        OFI Intelligence Center
+                    </h1>
+                    <p class="text-slate-500 text-sm mt-1">มุมมองการนำเสนอ: <span id="display-role" class="font-bold text-blue-600 uppercase bg-blue-50 px-2 py-0.5 rounded-md ml-1">-</span></p>
+                </div>
+                <button onclick="logout()" class="px-5 py-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 font-semibold text-sm transition-colors">ออกจากระบบ</button>
+            </header>
+
+            <div id="app-content" class="space-y-6"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:8000';
+
+        // --- [A] DATA SERVICE (คำนวณและจัดรูปแบบสถิติขั้นสูง) ---
+        class OFIDataService {
+            constructor(rawData) {
+                this.db = rawData || {};
+                // ใส่ ตัวป้องกันเซฟโซนกันค่าว่างพ่น Error
+                this.ofis = rawData?.ofiImprovements || [];
+                this.departments = rawData?.reference?.departments || [];
+            }
+
+    getSummaryKPIs() {
+        const total = this.ofis.length;
+        let doneCount = 0;
+        let delayedCount = 0;
+
+        this.ofis.forEach(o => {
+            if (!o) return; // ข้ามหากก้อนข้อมูลมีปัญหา
+            const status = o.overallStatus || o.phases?.['phase-plan']?.status;
+            if (status === 'Done' || status === 'Qualified') doneCount++;
+            if (status === 'Delayed') delayedCount++;
+        });
+
+        return {
+            total,
+            processCount: this.ofis.filter(o => o?.typeOfOFI === 'Process').length,
+            resultCount: this.ofis.filter(o => o?.typeOfOFI === 'Result').length,
+            criticalCount: this.ofis.filter(o => ['L4', 'L5'].includes(o?.ofiLevel)).length,
+            successRate: total ? Math.round((doneCount / total) * 100) : 0,
+            delayedCount
+                };
+            }
+
+            // คำนวณสถิติรายแผนกแยกตามระดับความสำคัญ (สำหรับทำ Stacked Bar Chart)
+            getDepartmentAnalysis() {
+                const labels = [];
+                const l123Series = [];
+                const l45Series = [];
+
+                this.departments.forEach(dept => {
+                    labels.push(dept.shortNameThai);
+                    let normalLoad = 0;
+                    let criticalLoad = 0;
+
+                    this.ofis.filter(o => o.departmentIds?.includes(dept.id)).forEach(o => {
+                        if (['L4', 'L5'].includes(o.ofiLevel)) criticalLoad++;
+                        else normalLoad++;
+                    });
+
+                    l123Series.push(normalLoad);
+                    l45Series.push(criticalLoad);
+                });
+
+                return { labels, normal: l123Series, critical: l45Series };
+            }
+
+            // คำนวณสัดส่วนของระดับขีดความสามารถ (L1 - L5)
+            getLevelDistribution() {
+                const counts = { L1: 0, L2: 0, L3: 0, L4: 0, L5: 0 };
+                this.ofis.forEach(o => { if(counts[o.ofiLevel] !== undefined) counts[o.ofiLevel]++; });
+                return Object.values(counts);
+            }
+        }
+
+        // --- [B] DASHBOARD APP (วาดหน้าจอและกราฟเชิงลึกแยกตามสิทธิ์) ---
+        class DashboardApp {
+            constructor(inputData) {
+                const data = inputData.db ? inputData.db : inputData;
+
+                this.db = data || {};
+                this.ofis = data?.ofiImprovements || [];
+                this.owners = data?.reference?.elementOwners || [];
+                this.scores = data?.topicScoreMaster?.enablers || [];
+                
+                this.contentDiv = document.getElementById('app-content');
+                this.activeCharts = [];
+            }
+
+            renderView(role, ownerId) {
+                if (role === 'executive') {
+                    this.renderExecutiveView();
+                } else if (role === 'owner') {
+                    this.renderOwnerView(ownerId);
+                } else if (role === 'auditor') {
+                    this.renderAuditorView();
+                }
+            }
+
+            clear() {
+                this.activeCharts.forEach(c => c.destroy());
+                this.activeCharts = [];
+                this.contentDiv.innerHTML = '';
+            }
+
+            // หยอดโครงสร้างการ์ดสถิติ (KPI Blocks) ด้านบนของทุกหน้า
+            renderKPIBlock(kpi) {
+                return `
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="metric-card bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex justify-between items-center">
+                            <div><p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">ปริมาณเคส OFI ทั้งหมด</p><p class="text-3xl font-bold text-slate-800 mt-1">${kpi.total}</p></div>
+                            <div class="p-3 bg-blue-50 text-blue-600 rounded-xl font-bold text-xl">📋</div>
+                        </div>
+                        <div class="metric-card bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex justify-between items-center">
+                            <div><p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">อัตราความสำเร็จร่วม</p><p class="text-3xl font-bold text-emerald-600 mt-1">${kpi.successRate}%</p></div>
+                            <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl font-bold text-xl">📈</div>
+                        </div>
+                        <div class="metric-card bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex justify-between items-center">
+                            <div><p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">งานวิกฤตความเสี่ยงสูง (L4-L5)</p><p class="text-3xl font-bold text-amber-600 mt-1">${kpi.criticalCount}</p></div>
+                            <div class="p-3 bg-amber-50 text-amber-500 rounded-xl font-bold text-xl">🔥</div>
+                        </div>
+                        <div class="metric-card bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex justify-between items-center">
+                            <div><p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">รายการที่ล่าช้า (Delayed)</p><p class="text-3xl font-bold text-rose-600 mt-1">${kpi.delayedCount}</p></div>
+                            <div class="p-3 bg-rose-50 text-rose-500 rounded-xl font-bold text-xl">⏳</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // --------------------------------------------------------
+            // 📈 1. EXECUTIVE VIEW (หน้าปัดสุขภาพองค์กร)
+            // --------------------------------------------------------
+            renderExecutiveView() {
+                this.clear();
+                const total = this.ofis.length;
+                const critical = this.ofis.filter(o => o.ofiLevel === 'L5').length;
+                const completed = this.ofis.filter(o => o.overallStatus === 'Done' || o.overallStatus === 'Qualified').length;
+                
+                // คำนวณสัดส่วน Strategic Focus
+                const processCount = this.ofis.filter(o => o?.typeOfOFI === 'Process').length;
+                const resultCount = this.ofis.filter(o => o?.typeOfOFI === 'Result').length;
+                const totalFocus = processCount + resultCount;
+                const processPercent = totalFocus ? Math.round((processCount / totalFocus) * 100) : 0;
+
+                // คำนวณไฟจราจร
+                let healthColor = 'text-emerald-500'; let healthBg = 'bg-emerald-50'; let healthText = 'สถานการณ์ปกติ';
+                if (critical > 0) { healthColor = 'text-rose-500'; healthBg = 'bg-rose-50'; healthText = 'ต้องเฝ้าระวัง (มีเคส L5)'; }
+
+                this.contentDiv.innerHTML = `
+                    <!-- ส่วนการ์ดสถิติแถวบน -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm card-hover flex flex-col justify-center items-center text-center">
+                            <div class="w-20 h-20 rounded-full ${healthBg} flex items-center justify-center mb-4">
+                                <span class="text-4xl ${healthColor}">${critical > 0 ? '🚨' : '✅'}</span>
+                            </div>
+                            <h3 class="text-slate-500 text-sm font-semibold uppercase tracking-wider">สุขภาพองค์กรปัจจุบัน</h3>
+                            <p class="text-2xl font-bold ${healthColor} mt-1">${healthText}</p>
+                            <p class="text-sm text-slate-400 mt-2">มีงานระดับ L5 จำนวน ${critical} รายการ</p>
+                        </div>
+                        
+                        <div class="md:col-span-2 grid grid-cols-2 gap-6">
+                            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                                <span class="text-slate-400 text-sm font-bold uppercase">ปริมาณงาน OFI รวม</span>
+                                <div class="flex items-end gap-3 mt-4">
+                                    <span class="text-5xl font-black text-slate-800">${total}</span>
+                                    <span class="text-slate-500 mb-1">รายการ</span>
+                                </div>
+                            </div>
+                            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                                <span class="text-slate-400 text-sm font-bold uppercase">แก้ไขเสร็จสิ้นแล้ว</span>
+                                <div class="flex items-end gap-3 mt-4">
+                                    <span class="text-5xl font-black text-emerald-500">${completed}</span>
+                                    <span class="text-slate-500 mb-1">รายการ</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ส่วนพื้นที่แสดงผลกราฟคู่ (Trend Line & Strategic Focus) -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+                        
+                        <!-- 1. กราฟแนวโน้ม SE-AM Score -->
+                        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm lg:col-span-2">
+                            <h3 class="font-bold text-slate-800 text-lg mb-1">📈 แนวโน้มคะแนนประเมิน SE-AM เฉลี่ย (ย้อนหลัง)</h3>
+                            <p class="text-sm text-slate-400 mb-6">ภาพรวมพัฒนาการขององค์กรตามการประเมิน Enabler หลัก</p>
+                            <div class="relative h-72 w-full"><canvas id="seamTrendChart"></canvas></div>
+                        </div>
+
+                        <!-- 2. กราฟโดนัท โฟกัสเชิงกลยุทธ์ (เพิ่มเปอร์เซ็นต์ตรงกลางวงกลม) 🌟 -->
+                        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-lg mb-1">โฟกัสเชิงกลยุทธ์ (Strategic Focus)</h3>
+                                <p class="text-sm text-slate-400 mb-4">สัดส่วนการเน้นแก้กระบวนการ (Process) เทียบกับผลลัพธ์ (Result)</p>
+                            </div>
+                            
+                            <!-- กล่องควบคุมตัวเลขทับแกนกลางวงกลม -->
+                            <div class="relative flex items-center justify-center h-56 my-auto">
+                                <canvas id="typePieChart"></canvas>
+                                <!-- แสดงตัวเลข Process Focus เป็นหลักตามมาตรฐานดีไซน์ของ image_4ce183.png -->
+                                <div class="absolute text-center pointer-events-none">
+                                    <p class="text-4xl font-black text-slate-800 leading-none">${processPercent}%</p>
+                                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Process Focus</p>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center text-xs text-slate-400 mt-2">
+                                วิเคราะห์จากสัดส่วนประเภทของใบงานทั้งหมดในคลังข้อมูล
+                            </div>
+                        </div>
+
+                    </div>
+                `;
+
+                // เตรียมข้อมูลวาดกราฟเส้น
+                const years = ['2563', '2564', '2565', '2566', '2567', '2568'];
+                const datasets = this.scores.slice(0, 3).map((enabler, idx) => {
+                    const colors = ['#3b82f6', '#f59e0b', '#10b981'];
+                    return {
+                        label: enabler.code,
+                        data: years.map(y => enabler.averageScoreByYear[y] || null),
+                        borderColor: colors[idx],
+                        tension: 0.4,
+                        borderWidth: 3
+                    };
+                });
+
+                const ctx = document.getElementById('seamTrendChart').getContext('2d');
+                this.activeCharts.push(new Chart(ctx, {
+                    type: 'line', data: { labels: years, datasets: datasets },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 2, max: 5 } } }
+                }));
+
+                const ctx2 = document.getElementById('typePieChart').getContext('2d');
+                this.activeCharts.push(new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Process Focus', 'Result Focus'],
+                        datasets: [{
+                            data: [processCount, resultCount],
+                            backgroundColor: ['#0284c7', '#10b981'], // สีฟ้าและเขียวตรงตามรูป image_4ce183.png
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '72%', // เพิ่มขนาดช่องว่างตรงกลางเพื่อเว้นพื้นที่ให้ตัวอักษรเปอร์เซ็นต์
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                }));
+                
+            }
+
+            // --------------------------------------------------------
+            // 👤 2. OWNER VIEW (To-Do List แบบการ์ดงาน)
+            // --------------------------------------------------------
+            renderOwnerView(ownerId) {
+                this.clear();
+                const myTasks = this.ofis.filter(o => o.elementOwnerId === ownerId);
+                const ownerInfo = this.owners.find(o => o.id === ownerId);
+
+                let cardsHtml = myTasks.map(o => {
+                    const isUrgent = o.ofiLevel === 'L5';
+                    const statusColor = o.overallStatus === 'Done' || o.overallStatus === 'Qualified' ? 'bg-emerald-500' : 'bg-amber-400';
+                    const tags = (o.issueTags || []).map(t => `<span class="px-2 py-1 bg-slate-100 text-slate-500 rounded text-[10px] font-mono">${t}</span>`).join(' ');
+
+                    return `
+                        <div class="bg-white rounded-3xl border ${isUrgent ? 'border-rose-300 shadow-rose-100' : 'border-slate-200'} shadow-sm overflow-hidden card-hover relative flex flex-col">
+                            ${isUrgent ? '<div class="bg-rose-500 text-white text-xs font-bold text-center py-1.5 uppercase tracking-wider">ด่วนที่สุด (L5)</div>' : ''}
+                            <div class="p-6 flex-1 flex flex-col">
+                                <div class="flex justify-between items-start mb-4">
+                                    <span class="px-3 py-1 bg-slate-100 text-slate-700 font-bold rounded-lg text-sm">${o.enablerCode}</span>
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2.5 h-2.5 rounded-full ${statusColor}"></span>
+                                        <span class="text-xs font-bold text-slate-500 uppercase">${o.overallStatus}</span>
+                                    </div>
+                                </div>
+                                <h4 class="font-bold text-slate-800 text-lg leading-snug mb-3 line-clamp-3">${o.ofiText}</h4>
+                                <div class="flex flex-wrap gap-2 mb-6">${tags}</div>
+                                <div class="mt-auto">
+                                    <p class="text-xs text-slate-400 mb-2 font-semibold">ความคืบหน้าล่าสุด:</p>
+                                    <p class="text-sm text-blue-700 bg-blue-50 p-3 rounded-xl border border-blue-100">${o.quarterlyProgressText || 'ยังไม่มีการบันทึกความคืบหน้า'}</p>
+                                    <button class="w-full mt-4 py-3 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold text-sm transition-colors">👉 คลิกเพื่ออัปเดตงาน</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                if(myTasks.length === 0) cardsHtml = `<div class="col-span-full text-center py-20 bg-white rounded-3xl border"><span class="text-6xl block mb-4">🎉</span><h3 class="text-xl font-bold text-slate-700">เยี่ยมมาก! ไม่มีงานค้าง</h3><p class="text-slate-500">คุณทำภารกิจเสร็จสิ้นหมดแล้ว</p></div>`;
+
+                this.contentDiv.innerHTML = `
+                    <div class="mb-6 flex items-center gap-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-xl">👨‍💼</div>
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800">ตารางงานของ ${ownerInfo?.nameThai || 'คุณ'}</h2>
+                            <p class="text-slate-500 text-sm">คุณมีงานที่ต้องรับผิดชอบทั้งหมด <strong class="text-blue-600">${myTasks.length}</strong> รายการ</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">${cardsHtml}</div>
+                `;
+            }
+
+            // --------------------------------------------------------
+            // 🔎 3. AUDITOR VIEW (เน้นแหล่งที่มา สคร. และ Risk Heatmap)
+            // --------------------------------------------------------
+            renderAuditorView() {
+                this.clear();
+                const skorOfis = this.ofis.filter(o => o.source === 'สคร.');
+                
+                let tableRows = skorOfis.map(o => `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50">
+                        <td class="p-4 font-bold text-slate-700">${o.enablerCode}</td>
+                        <td class="p-4"><span class="px-2 py-1 rounded bg-rose-100 text-rose-700 text-xs font-bold">${o.ofiLevel}</span></td>
+                        <td class="p-4 text-sm text-slate-600 truncate max-w-md" title="${o.ofiText}">${o.ofiText}</td>
+                        <td class="p-4 text-sm"><span class="px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-semibold">${o.overallStatus}</span></td>
+                    </tr>
+                `).join('');
+
+                this.contentDiv.innerHTML = `
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-sm p-6 overflow-hidden">
+                            <h3 class="font-bold text-slate-800 text-lg mb-1">🏛️ รายการที่ตรวจพบโดย สคร. (รอแก้ไข)</h3>
+                            <p class="text-sm text-slate-500 mb-6">คัดกรองเฉพาะงานที่ระบุแหล่งที่มาเป็น สคร. เพื่อความสะดวกในการติดตาม</p>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead><tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider"><th class="p-4 rounded-tl-xl">Enabler</th><th class="p-4">ระดับ</th><th class="p-4">รายละเอียด OFI</th><th class="p-4 rounded-tr-xl">สถานะ</th></tr></thead>
+                                    <tbody>${tableRows}</tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-slate-900 rounded-3xl shadow-lg p-6 text-slate-300">
+                            <h3 class="font-mono text-emerald-400 font-bold mb-4 flex items-center justify-between">
+                                <span>Risk & Type Matrix</span>
+                                <span class="text-xs bg-emerald-500/20 px-2 py-1 rounded">Real-time</span>
+                            </h3>
+                            <p class="text-xs text-slate-400 mb-6">สัดส่วนความเสี่ยงจำแนกตามประเภท</p>
+                            <div class="relative h-64"><canvas id="riskPieChart"></canvas></div>
+                        </div>
+                    </div>
+                `;
+
+                const processCount = this.ofis.filter(o => o.typeOfOFI === 'Process').length;
+                const resultCount = this.ofis.filter(o => o.typeOfOFI === 'Result').length;
+                
+                const ctx = document.getElementById('riskPieChart').getContext('2d');
+                this.activeCharts.push(new Chart(ctx, {
+                    type: 'doughnut',
+                    data: { labels: ['ด้าน Process', 'ด้าน Result'], datasets: [{ data: [processCount, resultCount], backgroundColor: ['#8b5cf6', '#ec4899'], borderWidth: 0 }] },
+                    options: { responsive: true, maintainAspectRatio: false, color: '#94a3b8', plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1' } } } }
+                }));
+            }
+        }
+
+        // --- [C] SSO LOGIN & CONNECTOR PIPELINE ---
+        window.onload = async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/owners`);
+                const json = await res.json();
+                const select = document.getElementById('owner-select');
+                select.innerHTML = json.data.map(o => `<option value="${o.id}">${o.nameThai} (${o.shortPosition})</option>`).join('');
+            } catch (err) {
+                console.error("API Gateway ไม่ตอบสนอง ตรวจสอบการเปิด Uvicorn:", err);
+            }
+        };
+
+        function login(role) { fetchDashboardData(`Bearer ${role}`); }
+        function loginOwner() { fetchDashboardData(`Bearer owner:${document.getElementById('owner-select').value}`); }
+        function logout() { location.reload(); }
+
+        async function fetchDashboardData(token) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/dashboard-data`, { method: 'GET', headers: { 'Authorization': token } });
+
+                // 🌟 เพิ่มจุดตรวจสอบสถานะการตอบกลับจาก Python
+                console.log("Backend Status:", response.status);
+
+                if (!response.ok) throw new Error("Access Denied");
+                const result = await response.json();
+                
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('main-dashboard').classList.remove('hidden');
+                document.getElementById('display-role').innerText = result.role;
+
+                let ownerId = null;
+                if (token.includes('owner:')) {
+                    ownerId = token.split('owner:')[1];
+                }
+                
+                // เริ่มระบบประมวลผลโมเดลและวาดกราฟเชิงลึกทันที
+                const dataService = new OFIDataService(result.data);
+                const app = new DashboardApp(dataService);
+                app.renderView(result.role, ownerId);
+
+            } catch (error) {
+                console.error("🔴 บั๊กตัวจริงที่ซ่อนอยู่คืออันนี้ครับ ->", error);
+                alert("สิทธิ์การเข้าถึงล้มเหลว หรือเซิร์ฟเวอร์หลังบ้านขัดข้อง!");
+            }
+        }
+    </script>
+</body>
+</html>

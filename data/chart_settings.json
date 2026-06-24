@@ -1,0 +1,68 @@
+{
+    "chart-yearly-comparison": {
+        "title": "2.1 เปรียบเทียบคะแนนภาพรวมรายปี",
+        "roles": [
+            "executive",
+            "auditor",
+            "owner"
+        ]
+    },
+    "chart-ofi-level": {
+        "title": "2.4 ระดับความยาก (OFI Level)",
+        "roles": [
+            "executive",
+            "auditor",
+            "owner"
+        ]
+    },
+    "chart-6year-trend": {
+        "title": "2.2 แนวโน้มคะแนนเฉลี่ย 6 ปี",
+        "roles": [
+            "executive",
+            "owner"
+        ]
+    },
+    "chart-individual-workload": {
+        "title": "2.3 ปริมาณงานและสถานะรายบุคคล",
+        "roles": [
+            "executive",
+            "owner"
+        ]
+    },
+    "chart-heatmap-matrix": {
+        "title": "3.1 ตารางเทียบความเคลื่อนไหวคะแนนรายหัวข้อ (6 ปี)",
+        "roles": [
+            "auditor",
+            "executive",
+            "owner"
+        ]
+    },
+    "chart-progress-list": {
+        "title": "3.2 ความคืบหน้าตามเกณฑ์",
+        "roles": [
+            "auditor",
+            "executive"
+        ]
+    },
+    "chart-defect-source": {
+        "title": "3.3 วิเคราะห์ประเภทและแหล่งที่มาข้อบกพร่อง",
+        "roles": [
+            "auditor",
+            "executive"
+        ]
+    },
+    "chart-gantt-grid": {
+        "title": "4.1 ตารางติดตามสถานะเฟสงาน (Gantt-Grid)",
+        "roles": [
+            "owner",
+            "executive"
+        ]
+    },
+    "chart-issue-tags": {
+        "title": "4.2 ประเด็นปัญหาที่พบบ่อย (Issue Tags)",
+        "roles": [
+            "owner",
+            "executive"
+        ]
+    }
+}

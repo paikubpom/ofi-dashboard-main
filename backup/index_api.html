@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OFI Ultimate Analytics Dashboard</title>
+    <link href="output.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* 🔵 จุดที่ 1: พื้นหลังสไตล์ Internet Business ไล่เฉดสีขาว-น้ำเงินแบบละมุน */
+        body { 
+            font-family: 'Kanit', sans-serif; 
+            background: linear-gradient(135deg, #f4f7fc 0%, #eef2f9 40%, #dbeafe 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        /* 🌌 แอนิเมชันสำหรับโหลดเนื้อหาให้ค่อยๆ ลอยขึ้นมาแบบสมูท (Fade In Up) */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* คลาสควบคุมความเคลื่อนไหวตอนข้อมูลเรนเดอร์ออกหน้าจอ */
+        .animate-fade-in-up {
+            animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* 💎 จุดที่ 2: คลาสกระจกใสโทนสีขาว-น้ำเงินอัจฉริยะ (Premium Glassmorphism) */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.65); /* ผิวกระจกขาวใส */
+            backdrop-filter: blur(20px);           /* ความเบลอฉากหลังระดับลึก */
+            -webkit-backdrop-filter: blur(20px);   /* รองรับ Safari */
+            border: 1px solid rgba(255, 255, 255, 0.6); /* ขอบกระจกสะท้อนแสง */
+            box-shadow: 0 8px 32px 0 rgba(30, 41, 59, 0.03); /* เงาฟุ้งจางๆ */
+            
+            /* 🚀 ตัวควบคุม Motion: สั่งให้ทุกการเปลี่ยนแปลง (Hover/Active) เคลื่อนไหวสมูทที่สุด */
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            will-change: transform, box-shadow; /* ช่วยให้การ์ดรันผ่าน GPU ไม่กระตุก */
+        }
+
+        /* เอฟเฟกต์เมื่อเอาเมาส์ไปชี้การ์ดกระจก (Micro-interactions) */
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.85); /* กระจกจะหนาขึ้นเล็กน้อยเพื่อดึงสายตา */
+            transform: translateY(-5px);           /* ยกตัวลอยขึ้นมาอย่างนุ่มนวล */
+            border-color: rgba(14, 165, 233, 0.4);   /* เพิ่มขอบเรืองแสงสีฟ้าอ่อน */
+            box-shadow: 0 20px 40px 0 rgba(14, 165, 233, 0.08); /* เงาสะท้อนสีฟ้าตามธีม */
+        }
+        
+        /* ล็อกขนาดความสูงของพื้นที่กราฟให้บาลานซ์ */
+        .chart-container { position: relative; height: 260px; width: 100%; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); transition: all 0.3s; }
+        .heatmap-cell { transition: all 0.2s; }
+        .heatmap-cell:hover { opacity: 0.8; transform: scale(1.05); border-radius: 4px; }
+    </style>
+</head>
+<body class="text-slate-800 flex h-screen overflow-hidden">
+
+    <div id="login-screen" class="fixed inset-0 bg-slate-900/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-100">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">🚀</div>
+                <h2 class="text-2xl font-bold text-slate-800">OFI Analytics Center</h2>
+            </div>
+            <div class="space-y-4">
+                <button onclick="login('executive')" class="w-full p-4 border border-slate-200 rounded-2xl hover:bg-slate-50 text-left transition-all flex items-center gap-4">
+                    <span class="text-2xl">👑</span><div><p class="font-bold text-slate-700">ผู้บริหาร (Executive)</p></div>
+                </button>
+                <button onclick="login('auditor')" class="w-full p-4 border border-slate-200 rounded-2xl hover:bg-slate-50 text-left transition-all flex items-center gap-4">
+                    <span class="text-2xl">🔍</span><div><p class="font-bold text-slate-700">ผู้ตรวจสอบ (Auditor)</p></div>
+                </button>
+                <div class="p-4 border border-slate-200 rounded-2xl bg-slate-50/50">
+                    <div class="flex items-center gap-4 mb-3"><span class="text-2xl">⚙️</span><div><p class="font-bold text-slate-700">เจ้าของกระบวนการ (Owner)</p></div></div>
+                    <select id="owner-select" class="w-full p-2.5 border border-slate-300 rounded-xl mb-3 bg-white text-sm outline-none"></select>
+                    <button onclick="loginOwner()" class="w-full py-2.5 bg-slate-800 text-white rounded-xl font-bold text-sm">เข้าสู่ระบบ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-dashboard" class="flex-1 overflow-y-auto hidden">
+        <div class="max-w-7xl mx-auto p-6 lg:p-8 space-y-6">
+            <header class="flex justify-between items-center bg-white p-6 rounded-3xl shadow-sm border border-slate-200/60">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
+                        <span class="w-3 h-3 rounded-full bg-blue-500 animate-pulse"></span> OFI Dashboard for <span id="display-role" class="font-bold text-blue-600 uppercase">-</span>
+                    </h1>
+                    <!-- <p class="text-slate-500 text-sm mt-1">มุมมอง: <span id="display-role" class="font-bold text-blue-600 uppercase">-</span></p> -->
+                </div>
+                <!-- <div class="flex gap-3">
+                    <select id="header-role-select" onchange="changeRoleFromHeader(this.value)" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-700 outline-none"></select>
+                    <button onclick="logout()" class="px-5 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-semibold text-sm hover:bg-slate-200">ออก</button>
+                </div> -->
+            </header>
+
+            <div id="red-flags-container"></div>
+
+            <div id="app-content" class="space-y-6"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:8000';
+
+        // 🧠 DATA ENGINE: จัดการประมวลผลข้อมูลทุกมิติ
+        class OFIDataService {
+            constructor(data) {
+                this.db = data || {};
+                this.ofis = data?.ofiImprovements || [];
+                this.owners = data?.reference?.elementOwners || [];
+                this.scores = data?.topicScoreMaster?.enablers || [];
+                this.phasesInfo = data?.reference?.phases || [];
+            }
+
+            // 1. ตัวชี้วัดหลัก
+            getKPIs() {
+                const total = this.ofis.length;
+                const completed = this.ofis.filter(o => ['Done', 'Qualified'].includes(o?.overallStatus)).length;
+                const delayed = this.ofis.filter(o => o?.overallStatus === 'Delayed').length;
+                return { total, successRate: total ? Math.round((completed/total)*100) : 0, delayed };
+            }
+
+            // 5. ระบบ Red Flags ตรวจจับอัตโนมัติ
+            detectRedFlags() {
+                let flags = [];
+                
+                // 5.1 คะแนนดิ่งเหว (Severe Drop > 1.0)
+                let dropAlerts = [];
+                this.scores.forEach(enabler => {
+                    enabler.topics?.forEach(topic => {
+                        const score67 = topic.scoreByYear?.['2567'];
+                        const score68 = topic.scoreByYear?.['2568'];
+                        if (score67 && score68 && (score67 - score68 > 1.0)) {
+                            dropAlerts.push(`${topic.topicName} (ปี67: ${score67} 📉 ปี68: ${score68})`);
+                        }
+                    });
+                });
+                if(dropAlerts.length > 0) flags.push({ type: 'score-drop', title: 'ตรวจพบหัวข้อคะแนนที่ต้องระวัง', detail: dropAlerts.join('<br>') });
+
+                // 5.2 งานไร้เจ้าภาพ (Orphaned Task) + เพิ่มระบบลิงก์ตรงไปยังไฟล์จริง
+                const orphans = this.ofis.filter(o => !o.elementOwnerId || (o.departmentIds && o.departmentIds.length === 0));
+                if(orphans.length > 0) {
+                    const detailHtml = orphans.map(o => {
+                        // ดึงชื่อไฟล์ที่หลังบ้านฝังมา หากไม่มีให้ใส่ค่า Default ไว้กันแครช
+                        const fileName = o._source_file || 'data.json'; 
+                        
+                        return `
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 bg-white/5 rounded-xl border border-white/10 mt-1.5">
+                                <div>
+                                    <span class="font-mono bg-rose-700 px-1.5 py-0.5 rounded text-[10px] mr-2">ID: ${o.id || 'ไม่ระบุ'}</span>
+                                    <span class="text-xs">หมวด: ${o.enablerCode || 'ไม่ระบุ'}</span>
+                                </div>
+                                <a href="${API_BASE_URL}/static-data/${fileName}" target="_blank" class="px-3 py-1 bg-white/20 hover:bg-white/40 text-[11px] font-bold rounded-lg transition-colors text-center shrink-0">
+                                    📂 เปิดดูไฟล์: ${fileName}
+                                </a>
+                            </div>
+                        `;
+                    }).join('');
+
+                    flags.push({ 
+                        type: 'orphan', 
+                        title: `พบใบงานไร้เจ้าภาพความรับผิดชอบจำนวน ${orphans.length} รายการ`, 
+                        detail: `<div class="space-y-1.5 mt-2">${detailHtml}</div>` 
+                    });
+                }
+
+                // 5.3 ข้อมูลสูญหาย (Missing Data in Sub-topics)
+                let missingCount = 0;
+                this.scores.forEach(en => en.topics?.forEach(t => t.subTopics?.forEach(st => {
+                    if(st.scoreByYear && st.scoreByYear['2568'] === null) missingCount++;
+                })));
+                if(missingCount > 0) flags.push({ type: 'missing', title: 'ฐานข้อมูลย่อย (Sub-topic) สูญหาย', detail: `ตรวจพบค่า Null ใน Sub-topic จำนวน ${missingCount} จุด ส่งผลต่อการประเมินความต่อเนื่อง` });
+
+                return flags;
+            }
+        }
+
+        // 🎨 DASHBOARD RENDERER: วาดหน้าจอตามสิทธิ์
+        class DashboardApp {
+            constructor(dataService) {
+                this.data = dataService;
+                this.contentDiv = document.getElementById('app-content');
+                this.flagsDiv = document.getElementById('red-flags-container');
+                this.charts = [];
+            }
+
+            clear() {
+                this.charts.forEach(c => c.destroy());
+                this.charts = [];
+                this.contentDiv.innerHTML = '';
+                this.flagsDiv.innerHTML = '';
+            }
+
+            renderView(role, ownerId) {
+                this.clear();
+                this.renderRedFlags(); // วาดแจ้งเตือนก่อนเสมอ
+                
+                if (role === 'executive') this.renderExecutiveView();
+                else if (role === 'auditor') this.renderAuditorView();
+                else if (role === 'owner') this.renderOwnerView(ownerId);
+            }
+
+            // --- WIDGET: แจ้งเตือน Red Flags ---
+            renderRedFlags() {
+                const flags = this.data.detectRedFlags();
+                if (flags.length === 0) return;
+
+                let html = `<div class="bg-rose-500 rounded-3xl p-6 shadow-lg shadow-rose-200 text-white animate-pulse-slow mb-6">
+                    <h3 class="text-lg font-black flex items-center gap-2">🚨 DATA REALITY CHECK WARNING</h3>
+                    <div class="mt-4 space-y-3">`;
+                
+                flags.forEach(f => {
+                    html += `<div class="glass-card/10 p-4 rounded-xl border border-white/20">
+                        <strong class="block text-rose-100">${f.title}</strong><span class="text-sm opacity-90">${f.detail}</span>
+                    </div>`;
+                });
+                this.flagsDiv.innerHTML = html + `</div></div>`;
+            }
+
+            // --- WIDGET: Global KPIs ---
+            getKpiHtml() {
+                const kpis = this.data.getKPIs();
+                return `
+                    <div class="grid grid-cols-3 gap-6 mb-6">
+                        <div class="glass-card p-5 rounded-2xl border border-slate-200 shadow-sm"><p class="text-xs text-slate-400 font-bold uppercase">1.1 OFI ทั้งหมด</p><p class="text-4xl font-black text-slate-800 mt-2">${kpis.total}</p></div>
+                        <div class="glass-card p-5 rounded-2xl border border-slate-200 shadow-sm"><p class="text-xs text-slate-400 font-bold uppercase">1.2 อัตราปิดงานสำเร็จ</p><p class="text-4xl font-black text-emerald-500 mt-2">${kpis.successRate}%</p></div>
+                        <div class="glass-card p-5 rounded-2xl border border-rose-200 bg-rose-50 shadow-sm"><p class="text-xs text-rose-400 font-bold uppercase">1.3 งานค้างวิกฤต (Delayed)</p><p class="text-4xl font-black text-rose-600 mt-2">${kpis.delayed}</p></div>
+                    </div>`;
+            }
+
+            // 👑 ROLE 1: EXECUTIVE (ฉบับสมบูรณ์: ดึงปีอัตโนมัติ + ป๊อปอัพรายบุคคล + แก้บั๊ก ReferenceError)
+            renderExecutiveView() {
+                this.clear();
+                
+                // 🌟 1. ดึงปีอัตโนมัติจากข้อมูลดิบ และตั้งค่า Default
+                let dynamicYears = new Set();
+                this.data.scores.forEach(s => {
+                    if(s.averageScoreByYear) Object.keys(s.averageScoreByYear).forEach(y => dynamicYears.add(y));
+                });
+                const years = Array.from(dynamicYears).sort((a,b) => parseInt(a) - parseInt(b));
+                if(years.length === 0) years.push('2567', '2568'); 
+
+                const latestYear = years[years.length - 1];
+                const prevYear = years.length > 1 ? years[years.length - 2] : latestYear;
+                const renderYearOptions = (selectedY) => years.map(y => `<option value="${y}" ${y === selectedY ? 'selected' : ''}>${y}</option>`).join('');
+
+                // 🌟 2. ประกาศตัวแปรสำหรับกราฟ 2.3 ไว้ด้านบนสุดป้องกันบั๊ก
+                const ownerNames = this.data.owners.map(o => o.nameThai);
+                const statuses = ['Not started', 'In progress', 'Done', 'Qualified', 'Delayed'];
+                const bgColors = ['#cbd5e1', '#fcd34d', '#34d399', '#059669', '#ef4444'];
+                const stackDatasets = statuses.map((status, i) => {
+                    return { label: status, backgroundColor: bgColors[i], data: this.data.owners.map(owner => this.data.ofis.filter(o => o.elementOwnerId === owner.id && o.overallStatus === status).length) };
+                });
+
+                // 🌟 3. คำนวณอินไซต์เริ่มต้นสำหรับกราฟ 2.4 (OFI Level)
+                const levels = { L1:0, L2:0, L3:0, L4:0, L5:0 };
+                this.data.ofis.forEach(o => { if(o.ofiLevel) levels[o.ofiLevel]++; });
+                const totalLevel = Object.values(levels).reduce((a,b)=>a+b, 0);
+                const maxLevel = Object.keys(levels).reduce((a, b) => levels[a] > levels[b] ? a : b);
+                const maxPercent = totalLevel ? Math.round((levels[maxLevel]/totalLevel)*100) : 0;
+
+                // 🌟 4. คำนวณอินไซต์เริ่มต้นสำหรับกราฟ 2.3 (ผู้ปิดงาน/งานค้างสูงสุด)
+                let topCloser = { name: '-', count: 0 };
+                let topOverloaded = { name: '-', count: 0 };
+                this.data.owners.forEach(owner => {
+                    const doneCnt = this.data.ofis.filter(o => o.elementOwnerId === owner.id && ['Done', 'Qualified'].includes(o.overallStatus)).length;
+                    const pendingCnt = this.data.ofis.filter(o => o.elementOwnerId === owner.id && ['Not started', 'In progress', 'Delayed'].includes(o.overallStatus)).length;
+                    if(doneCnt > topCloser.count) { topCloser.count = doneCnt; topCloser.name = owner.nameThai.split(' ')[0]; }
+                    if(pendingCnt > topOverloaded.count) { topOverloaded.count = pendingCnt; topOverloaded.name = owner.nameThai.split(' ')[0]; }
+                });
+
+                // วาดโครงสร้าง HTML
+                this.contentDiv.innerHTML = this.getKpiHtml() + `
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in-up">
+                        
+                        <!-- 2.1 กราฟเรดาร์ (เปลี่ยนเป็น Bar อัจฉริยะ) -->
+                        <div class="glass-card p-6 rounded-3xl lg:col-span-2 flex flex-col justify-between">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
+                                <div>
+                                    <h3 class="font-bold text-slate-800 text-base">2.1 เปรียบเทียบคะแนนภาพรวมรายปี</h3>
+                                    <p class="text-[11px] text-slate-400">เลือกปีคู่ขนานเพื่อวิเคราะห์ส่วนต่างพัฒนาการของ Enablers</p>
+                                </div>
+                                <div class="flex items-center gap-1.5 bg-white/80 border border-slate-200 shadow-sm rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700">
+                                    <span>ปีฐาน:</span>
+                                    <select id="compare-year-1" class="bg-transparent text-blue-600 outline-none cursor-pointer font-extrabold focus:text-blue-800">
+                                        ${renderYearOptions(prevYear)}
+                                    </select>
+                                    <span class="text-slate-300 font-normal mx-0.5">|</span>
+                                    <span>ปีเทียบ:</span>
+                                    <select id="compare-year-2" class="bg-transparent text-blue-600 outline-none cursor-pointer font-extrabold focus:text-blue-800">
+                                        ${renderYearOptions(latestYear)}
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="year-insight-box" class="min-h-[40px]"></div>
+                            <div class="h-64 mt-2"><canvas id="radarChart"></canvas></div>
+                        </div>
+
+                        <!-- 2.4 Donut Chart -->
+                        <div class="glass-card p-6 rounded-3xl flex flex-col justify-between">
+                            <div>
+                                <h3 class="font-bold text-slate-800 mb-1">2.4 ระดับความยาก (OFI Level)</h3>
+                                <p class="text-[11px] text-slate-400 mb-2">สัดส่วนความรุนแรงของข้อบกพร่อง</p>
+                            </div>
+                            <div class="relative flex-1 flex items-center justify-center min-h-[160px]">
+                                <canvas id="donutChart"></canvas>
+                                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none">
+                                    <span class="text-4xl font-black text-slate-800 leading-none">${totalLevel}</span>
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">รายการทั้งหมด</span>
+                                </div>
+                            </div>
+                            <div class="mt-4 p-3 bg-amber-50 rounded-xl border border-amber-100 flex items-start gap-2">
+                                <span class="text-base">💡</span>
+                                <div class="text-[11px] text-amber-700">
+                                    <strong>Insight สำคัญ:</strong> ปัญหาประจุกตัวอยู่ที่ระดับ <strong class="text-sm font-black">${maxLevel}</strong> คิดเป็น ${maxPercent}% ของงานทั้งหมด
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2.2 Multi-Line Chart -->
+                        <div class="glass-card p-6 rounded-3xl lg:col-span-3">
+                            <h3 class="font-bold text-slate-800 mb-4">2.2 แนวโน้มคะแนนเฉลี่ย ${years.length} ปี <span class="text-xs text-blue-500 font-normal ml-2">(คลิกที่ชื่อหมวดด้านบน เพื่อดูเฉพาะหมวดนั้น)</span></h3>
+                            <div class="h-72"><canvas id="lineChart"></canvas></div>
+                        </div>
+
+                        <!-- 2.3 Stacked Column -->
+                        <div class="glass-card p-6 rounded-3xl lg:col-span-3">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6">
+                                <div>
+                                    <h3 class="font-bold text-slate-800 mb-1">2.3 ปริมาณงานและสถานะรายบุคคล</h3>
+                                    <p class="text-xs text-slate-400">เปรียบเทียบภาระงานของเจ้าภาพแต่ละท่าน <strong class="text-blue-500">(คลิกที่แท่งกราฟเพื่อดูใบงานจริง)</strong></p>
+                                </div>
+                                <div class="flex flex-wrap gap-2 text-[11px]">
+                                    <div class="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-lg">🏆 ปิดงานสูงสุด: <strong>${topCloser.name} (${topCloser.count})</strong></div>
+                                    <div class="px-3 py-1.5 bg-rose-50 text-rose-700 border border-rose-100 rounded-lg">🔥 งานค้างสะสมสูงสุด: <strong>${topOverloaded.name} (${topOverloaded.count})</strong></div>
+                                </div>
+                            </div>
+                            <div class="h-72"><canvas id="stackedChart"></canvas></div>
+                        </div>
+                    </div>`;
+
+                // ==========================================
+                // 🔄 ENGINE: คำนวณและวาดกราฟ 2.1 (Focus Mode + พ่นคะแนนดิบเหนือแท่งกราฟ)
+                // ==========================================
+                const runYearComparisonPipeline = () => {
+                    const y1 = document.getElementById('compare-year-1').value;
+                    const y2 = document.getElementById('compare-year-2').value;
+
+                    const labels = this.data.scores.map(s => s.code);
+                    const dataY1 = this.data.scores.map(s => s.averageScoreByYear?.[y1] || 0);
+                    const dataY2 = this.data.scores.map(s => s.averageScoreByYear?.[y2] || 0);
+
+                    let maxGrowth = { code: '', value: -99 };
+                    let hasValidData = false;
+                    labels.forEach((code, i) => {
+                        if(this.data.scores[i].averageScoreByYear?.[y1] !== undefined && this.data.scores[i].averageScoreByYear?.[y2] !== undefined) {
+                            hasValidData = true;
+                            const growth = dataY2[i] - dataY1[i];
+                            if(growth > maxGrowth.value) maxGrowth = { code, value: growth };
+                        }
+                    });
+
+                    const insightBox = document.getElementById('year-insight-box');
+                    if(hasValidData && maxGrowth.code) {
+                        const trendSummary = maxGrowth.value > 0 ? `ทำคะแนนพัฒนาขึ้นสูงสุดโดดเด่น <strong class="text-emerald-600 font-bold">+${maxGrowth.value.toFixed(2)}</strong> คะแนน` : maxGrowth.value < 0 ? `ชะลอตัวน้อยที่สุดอยู่ที่ <strong class="text-rose-600 font-bold">${maxGrowth.value.toFixed(2)}</strong> คะแนน` : `มีผลการประเมินคงที่ระดับเดิม`;
+                        insightBox.innerHTML = `<div class="p-2.5 bg-blue-50/80 border border-blue-100 rounded-xl text-[11px] text-blue-800 flex items-center gap-2 animate-fade-in-up"><span>🚀 <strong>Insight พัฒนาการ:</strong> เมื่อวิเคราะห์จากช่วงปี ${y1} ข้ามไปยังปี ${y2} พบว่าหมวด <strong>${maxGrowth.code}</strong> ${trendSummary}</span></div>`;
+                    } else {
+                        insightBox.innerHTML = `<div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-500">⚠️ ข้อมูลตัวเลขดัชนีชี้วัดไม่สมบูรณ์ในระบบ</div>`;
+                    }
+
+                    if (this.yearCompChartInstance) {
+                        this.yearCompChartInstance.destroy();
+                        this.charts = this.charts.filter(c => c !== this.yearCompChartInstance);
+                    }
+
+                    // รหัสโทนสีหลักคงเดิมตามหน้าแดชบอร์ด
+                    const colorY1 = '#64748b'; // สีเทา (ปีฐาน)
+                    const colorY2 = '#3b82f6'; // สีน้ำเงิน (ปีเทียบ)
+
+                    // ยัดโครงสร้าง Datasets พร้อมพ่วง Property ตรวจจับสถานะการคลิกโฟกัส (isFocused)
+                    const compDatasets = [
+                        { label: `ปี ${y1}`, data: dataY1, backgroundColor: colorY1, borderRadius: 5, barPercentage: 0.8, categoryPercentage: 0.7, isFocused: false },
+                        { label: `ปี ${y2}`, data: dataY2, backgroundColor: colorY2, borderRadius: 5, barPercentage: 0.8, categoryPercentage: 0.7, isFocused: false }
+                    ];
+
+                    // ท่อกลางสำหรับสลับสถานะและคำนวณแสงแฟลช Focus Mode ของแท่งกราฟ
+                    const toggleBarFocusMode = (ci, clickedIndex) => {
+                        const datasets = ci.data.datasets;
+                        datasets[clickedIndex].isFocused = !datasets[clickedIndex].isFocused;
+
+                        const anyFocused = datasets.some(ds => ds.isFocused);
+
+                        datasets.forEach((ds, i) => {
+                            ds.hidden = false; // ป้องกันพฤติกรรมดั้งเดิมที่ชอบขีดฆ่าตัวหนังสือทิ้ง
+                            const baseColor = i === 0 ? colorY1 : colorY2;
+
+                            if (!anyFocused) {
+                                // คืนสิทธิ์ความสว่างปกติถ้าไม่มีการเลือกใดๆ
+                                ds.backgroundColor = baseColor;
+                            } else {
+                                // ขับสีเข้มเฉพาะกลุ่มที่เลือก และดรอปสีคู่แข่งลงเหลือ 20% (เติมโค้ดความโปร่งใส '33')
+                                ds.backgroundColor = ds.isFocused ? baseColor : baseColor + '33';
+                            }
+                        });
+                        ci.update();
+                    };
+
+                    this.yearCompChartInstance = new Chart(document.getElementById('radarChart').getContext('2d'), {
+                        type: 'bar',
+                        data: { labels: labels, datasets: compDatasets },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            
+                            // 🌟 1. ดักจับเมื่อผู้ใช้งานคลิกไปที่ตัวแท่งกราฟของปีนั้นๆ โดยตรง
+                            onClick: (event, activeElements, chart) => {
+                                if (activeElements.length > 0) {
+                                    toggleBarFocusMode(chart, activeElements[0].datasetIndex);
+                                }
+                            },
+                            // เปลี่ยนเคอร์เซอร์เมาส์เป็นรูปมือเมื่อลากผ่านแท่งกราฟเพิ่ม UX Hint
+                            onHover: (event, activeElements) => {
+                                event.native.target.style.cursor = activeElements.length ? 'pointer' : 'default';
+                            },
+
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                    labels: { font: { family: 'Kanit', size: 11 }, usePointStyle: true },
+                                    // 🌟 2. ดักจับเมื่อคลิกที่ป้ายชื่อตัวเลือกด้านบนสุด
+                                    onClick: function(e, legendItem, legend) {
+                                        toggleBarFocusMode(legend.chart, legendItem.datasetIndex);
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                                    callbacks: {
+                                        afterBody: function(context) {
+                                            if (context.length === 2) {
+                                                const diff = context[1].raw - context[0].raw;
+                                                return `ผลต่าง: ${diff > 0 ? '📈 +' : diff < 0 ? '📉 ' : '➖ '}${diff.toFixed(2)}`;
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: { min: 0, max: 5, ticks: { stepSize: 1, font: { family: 'Kanit' } }, grid: { color: '#f1f5f9' } },
+                                x: { grid: { display: false }, ticks: { font: { family: 'Kanit', size: 11, weight: 'bold' } } }
+                            }
+                        },
+                        plugins: [{
+                            id: 'barDataLabels',
+                            // 🌟 3. ปลั๊กอินสลักคะแนนดิบขอบขาวเรืองแสงลอยเหนือแท่งที่เลือก
+                            afterDatasetsDraw(chart) {
+                                const { ctx, data } = chart;
+                                ctx.save();
+                                ctx.font = 'bold 11px Kanit';
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'bottom';
+
+                                data.datasets.forEach((dataset, datasetIndex) => {
+                                    // สั่งให้พ่นคะแนนเฉพาะแท่งปีที่กำลังถูกล็อก Focus อยู่เท่านั้น
+                                    if (dataset.isFocused) {
+                                        const meta = chart.getDatasetMeta(datasetIndex);
+                                        
+                                        // ปรับสีฟอนต์ให้อ่านง่ายสอดคล้องกับแท่งกราฟ (ปีฐานใช้สี Slate เข้ม / ปีเทียบใช้สี Blue เข้ม)
+                                        ctx.fillStyle = datasetIndex === 0 ? '#475569' : '#1d4ed8';
+                                        
+                                        // ปรับสลักเงาเรืองแสงรอบตัวอักษรกันพื้นหลังกลืน
+                                        ctx.shadowColor = 'rgba(255, 255, 255, 0.95)';
+                                        ctx.shadowBlur = 4;
+
+                                        meta.data.forEach((element, index) => {
+                                            const value = dataset.data[index];
+                                            if (value !== null && value !== undefined && value > 0) {
+                                                // สั่งพิมพ์คะแนนเหนือยอดขอบแท่งขึ้นไป 4 พิกเซล
+                                                ctx.fillText(Number(value).toFixed(2), element.x, element.y - 4);
+                                            }
+                                        });
+                                    }
+                                });
+                                ctx.restore();
+                            }
+                        }]
+                    });
+                    this.charts.push(this.yearCompChartInstance);
+                };
+
+                runYearComparisonPipeline();
+                document.getElementById('compare-year-1').addEventListener('change', runYearComparisonPipeline);
+                document.getElementById('compare-year-2').addEventListener('change', runYearComparisonPipeline);
+
+                // --- 2.4 Donut Logic ---
+                this.charts.push(new Chart(document.getElementById('donutChart'), { type: 'doughnut', data: { labels: Object.keys(levels), datasets: [{ data: Object.values(levels), backgroundColor: ['#e2e8f0', '#cbd5e1', '#94a3b8', '#f59e0b', '#ef4444'], borderWidth: 2, borderColor: '#fff'}] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } } } }));
+
+               // --- 🌟 2.2 Multi-Line Logic (Focus Mode: เปรียบเทียบสูงสุด 2 เส้นพร้อมกัน) ---
+                const palette = ['#3b82f6', '#ec4899', '#f59e0b', '#10b981', '#8b5cf6', '#64748b', '#0ea5e9', '#f43f5e', '#d97706', '#14b8a6'];
+                
+                const lineDatasets = this.data.scores.map((enabler, index) => ({ 
+                    label: enabler.code, 
+                    data: years.map(y => enabler.averageScoreByYear[y] || null), 
+                    borderColor: palette[index % 10], 
+                    backgroundColor: palette[index % 10], 
+                    tension: 0.3, 
+                    borderWidth: 2.5, 
+                    pointRadius: 4, 
+                    pointHoverRadius: 8, 
+                    pointHoverBackgroundColor: '#ffffff', 
+                    pointHoverBorderWidth: 3,
+                    isFocused: false // 🌟 เพิ่มตัวแปรสำหรับจำสถานะว่าเส้นนี้ถูกคลิกเลือกอยู่หรือไม่
+                }));
+
+                // 🌟 ฟังก์ชันจัดการ Focus Mode (รองรับการดวลเปรียบเทียบ 2 เส้น)
+                const toggleFocusMode = (ci, clickedIndex) => {
+                    const datasets = ci.data.datasets;
+                    const isCurrentlyFocused = datasets[clickedIndex].isFocused;
+                    
+                    if (isCurrentlyFocused) {
+                        // ถ้าคลิกเส้นที่เลือกอยู่แล้ว -> ยกเลิกการเลือก
+                        datasets[clickedIndex].isFocused = false;
+                    } else {
+                        // นับว่าตอนนี้มีเส้นที่กำลัง Active อยู่กี่เส้น
+                        let focusedCount = datasets.filter(ds => ds.isFocused).length;
+                        
+                        // ถ้าเลือกครบ 2 เส้นแล้ว และกำลังจะจิ้มเส้นที่ 3 -> ให้เตะเส้นแรกที่เลือกออกก่อน (สลับคิว)
+                        if (focusedCount >= 2) {
+                            const firstFocusedIndex = datasets.findIndex(ds => ds.isFocused);
+                            if (firstFocusedIndex !== -1) datasets[firstFocusedIndex].isFocused = false;
+                        }
+                        
+                        // โฟกัสเส้นใหม่ที่เพิ่งคลิก
+                        datasets[clickedIndex].isFocused = true;
+                    }
+
+                    // อัปเดตสีของทุกเส้นตามสถานะคิวล่าสุด
+                    const anyFocused = datasets.some(ds => ds.isFocused);
+
+                    datasets.forEach((ds, i) => { 
+                        ds.hidden = false; // ป้องกันระบบ Chart.js ขีดฆ่าป้ายชื่อ
+                        
+                        if (!anyFocused) {
+                            // โหมดปกติ (ไม่มีเส้นไหนถูกเลือกเลย): สว่างเท่ากันหมด
+                            ds.borderColor = palette[i % 10]; ds.backgroundColor = palette[i % 10]; ds.borderWidth = 2.5;
+                        } else {
+                            if (ds.isFocused) {
+                                // เส้นที่ถูกเลือกให้ดวลกัน: สว่าง สีสด เส้นหนาขึ้น
+                                ds.borderColor = palette[i % 10]; ds.backgroundColor = palette[i % 10]; ds.borderWidth = 4.5;
+                            } else {
+                                // เส้นอื่นๆ: ดรอปจางลงกลายเป็นพื้นหลัง (เติม 26 ลงไปที่ HEX = ความโปร่งใส 15%)
+                                ds.borderColor = palette[i % 10] + '26'; ds.backgroundColor = palette[i % 10] + '26'; ds.borderWidth = 1.5;
+                            }
+                        }
+                    }); 
+                    ci.update(); 
+                };
+
+                this.charts.push(new Chart(document.getElementById('lineChart'), { 
+                    type: 'line', data: { labels: years, datasets: lineDatasets }, 
+                    options: { 
+                        responsive: true, maintainAspectRatio: false, 
+                        interaction: { mode: 'nearest', intersect: false }, 
+                        
+                        // รองรับการคลิกลงบนเส้นโดยตรง
+                        onClick: (event, activeElements, chart) => {
+                            if (activeElements.length > 0) toggleFocusMode(chart, activeElements[0].datasetIndex);
+                        },
+                        onHover: (event, activeElements) => {
+                            event.native.target.style.cursor = activeElements.length ? 'pointer' : 'default';
+                        },
+
+                        plugins: { 
+                            legend: { 
+                                position: 'top', align: 'center', labels: { usePointStyle: true, boxWidth: 15, font: { family: 'Kanit', size: 12 }, padding: 15 }, 
+                                // รองรับการคลิกที่ป้ายชื่อ Legend ด้านบน
+                                onClick: function(e, legendItem, legend) { 
+                                    toggleFocusMode(legend.chart, legendItem.datasetIndex);
+                                } 
+                            }, 
+                            tooltip: { 
+                                backgroundColor: 'rgba(15, 23, 42, 0.95)', padding: 12, 
+                                titleFont: { size: 14, family: 'Kanit' }, bodyFont: { size: 13, family: 'Kanit' }
+                            } 
+                        }, 
+                        scales: { y: { min: 2, max: 5.4, grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } } 
+                    }, 
+                    plugins: [{ 
+                        id: 'isolateDataLabels', 
+                        afterDatasetsDraw(chart) { 
+                            const { ctx, data } = chart; 
+                            
+                            // 🌟 วนหาเส้นทั้งหมดที่กำลังขึ้นสังเวียน Focus อยู่ (สูงสุด 2 เส้น)
+                            const selectedIndices = []; 
+                            data.datasets.forEach((dataset, i) => { if (dataset.isFocused) selectedIndices.push(i); }); 
+                            
+                            // สั่งให้กราฟพ่นตัวเลขคะแนนออกมาบนเส้นเหล่านั้นพร้อมกัน
+                            if (selectedIndices.length > 0) { 
+                                selectedIndices.forEach(datasetIndex => {
+                                    const dataset = data.datasets[datasetIndex]; 
+                                    const meta = chart.getDatasetMeta(datasetIndex); 
+                                    
+                                    ctx.save(); 
+                                    ctx.font = 'bold 12px Kanit'; 
+                                    ctx.fillStyle = palette[datasetIndex % 10]; 
+                                    
+                                    // 🌟 พระเอกของงานนี้: ใส่เงาสีขาวเรืองแสงบางๆ ให้ตัวเลข เผื่อเวลาเส้น 2 เส้นดิ่งมาตัดกันตัวเลขจะได้ไม่ตีกันเอง
+                                    ctx.shadowColor = 'rgba(255, 255, 255, 0.9)';
+                                    ctx.shadowBlur = 5;
+                                    
+                                    ctx.textAlign = 'center'; 
+                                    ctx.textBaseline = 'bottom'; 
+                                    
+                                    meta.data.forEach((element, index) => { 
+                                        const value = dataset.data[index]; 
+                                        if (value !== null && value !== undefined) {
+                                            // ยกตัวอักษรขึ้นมานิดหน่อย ไม่ให้ทับวงกลมจุดตัด
+                                            ctx.fillText(Number(value).toFixed(2), element.x, element.y - 8); 
+                                        }
+                                    }); 
+                                    ctx.restore(); 
+                                });
+                            } 
+                        } 
+                    }] 
+                }));
+
+                // --- 2.3 Stacked Column Logic (พร้อม Modal ป๊อปอัพ) ---
+                const showOwnerTasksModal = (owner) => {
+                    const ownerTasks = this.data.ofis.filter(o => o.elementOwnerId === owner.id);
+                    const statusStyles = { 'Not started': 'bg-slate-100 text-slate-600 border-slate-200', 'In progress': 'bg-amber-50 text-amber-600 border-amber-200/70', 'Done': 'bg-emerald-50 text-emerald-600 border-emerald-200/70', 'Qualified': 'bg-teal-50 text-teal-600 border-teal-200/70', 'Delayed': 'bg-rose-50 text-rose-600 border-rose-200/70' };
+
+                    const modalHtml = `
+                        <div id="task-modal-overlay" class="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-300 opacity-0">
+                            <div class="glass-card max-w-2xl w-full p-6 rounded-3xl shadow-2xl flex flex-col max-h-[80vh] transform scale-95 transition-all duration-300">
+                                <div class="flex justify-between items-center border-b border-slate-200/40 pb-4 mb-4">
+                                    <div><h4 class="text-base font-bold text-slate-800">📋 ใบงานในความรับผิดชอบ: ${owner.nameThai}</h4><p class="text-[11px] text-slate-400">ประวัติความคืบหน้าทั้งหมด ${ownerTasks.length} รายการ</p></div>
+                                    <button id="close-modal-btn" class="p-1.5 hover:bg-slate-100/80 rounded-full text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                                </div>
+                                <div class="flex-1 overflow-y-auto space-y-2.5 pr-1">
+                                    ${ownerTasks.length === 0 ? '<p class="text-center text-xs text-slate-400 py-6">ไม่มีภาระงานผูกมัดในระบบ</p>' : 
+                                    ownerTasks.map(t => {
+                                        const badgeClass = statusStyles[t.overallStatus] || 'bg-slate-100 text-slate-600';
+                                        return `<div class="p-3 bg-white/70 border border-slate-200/50 rounded-2xl flex justify-between items-center gap-2 hover:border-blue-300/40 transition-all duration-300">
+                                            <div class="space-y-1"><div class="flex items-center gap-1.5 flex-wrap"><span class="bg-blue-50 text-blue-600 border border-blue-100 px-1.5 py-0.5 rounded font-mono text-[10px] font-bold">${t.id}</span><span class="text-[10px] font-medium text-slate-400">หมวด: ${t.enablerCode || '-'}</span></div><p class="text-xs font-bold text-slate-700 leading-relaxed">${t.topicName || 'ไม่มีข้อมูลหัวข้อประเมิน'}</p></div>
+                                            <div class="flex items-center gap-2 shrink-0"><span class="text-[10px] py-0.5 px-2 rounded-full border ${badgeClass} font-bold">${t.overallStatus}</span>
+                                            ${t._source_file ? `<a href="${API_BASE_URL}/static-data/${t._source_file}" target="_blank" class="p-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors" title="ดึงไฟล์ Excel ตัวจริง"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg></a>` : ''}</div></div>`;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        </div>`;
+                    const oldModal = document.getElementById('task-modal-overlay');
+                    if (oldModal) oldModal.remove();
+                    document.body.insertAdjacentHTML('beforeend', modalHtml);
+                    const overlay = document.getElementById('task-modal-overlay');
+                    const card = overlay.querySelector('.glass-card');
+                    setTimeout(() => { overlay.classList.remove('opacity-0'); card.classList.remove('scale-95'); }, 15);
+                    const closeModal = () => { overlay.classList.add('opacity-0'); card.classList.add('scale-95'); setTimeout(() => overlay.remove(), 250); };
+                    document.getElementById('close-modal-btn').addEventListener('click', closeModal);
+                    overlay.addEventListener('click', (e) => { if(e.target === overlay) closeModal(); });
+                };
+
+                this.charts.push(new Chart(document.getElementById('stackedChart'), { 
+                    type: 'bar', data: { labels: ownerNames, datasets: stackDatasets }, 
+                    options: { responsive: true, maintainAspectRatio: false, 
+                        onClick: (event, activeElements) => { if (activeElements.length > 0) showOwnerTasksModal(this.data.owners[activeElements[0].index]); },
+                        onHover: (event, activeElements) => { event.native.target.style.cursor = activeElements.length ? 'pointer' : 'default'; },
+                        scales: { x: { stacked: true }, y: { stacked: true, ticks: { stepSize: 1 } } } 
+                    } 
+                }));
+            }
+
+            // 🔍 ROLE 2: AUDITOR (ตาราง 6 ปีเต็ม + ไฮไลท์คู่ขนาน + คลิกคะแนนเปิดป๊อปอัพส่อง Insight รายปี)
+            renderAuditorView() {
+                this.clear();
+
+                // --- 1. สแกนปีอัตโนมัติจากข้อมูลดิบ (Dynamic Year Auto-Detect) ---
+                let dynamicYears = new Set();
+                this.data.scores.forEach(enabler => {
+                    enabler.topics?.forEach(t => {
+                        if(t.scoreByYear) Object.keys(t.scoreByYear).forEach(y => dynamicYears.add(y));
+                    });
+                });
+                const years = Array.from(dynamicYears).sort((a,b) => parseInt(a) - parseInt(b));
+                if(years.length === 0) years.push('2567', '2568');
+
+                const latestYear = years[years.length - 1];
+                const prevYear = years.length > 1 ? years[years.length - 2] : latestYear;
+                const renderYearOptions = (selectedY) => years.map(y => `<option value="${y}" ${y === selectedY ? 'selected' : ''}>${y}</option>`).join('');
+
+                const skorOfisList = this.data.ofis.filter(o=>o.source==='สคร.');
+                const seamOfisList = this.data.ofis.filter(o=>o.source==='Enabler Improvement Plan');
+                const srcSkor = skorOfisList.length;
+                const srcSeam = seamOfisList.length;
+                const skorProcess = skorOfisList.filter(o=>o.typeOfOFI==='Process').length;
+                const skorResult = skorOfisList.filter(o=>o.typeOfOFI==='Result').length;
+                const seamProcess = seamOfisList.filter(o=>o.typeOfOFI==='Process').length;
+                const seamResult = seamOfisList.filter(o=>o.typeOfOFI==='Result').length;
+                const totalProcess = this.data.ofis.filter(o=>o.typeOfOFI==='Process').length;
+                const totalResult = this.data.ofis.filter(o=>o.typeOfOFI==='Result').length;
+
+                // --- 2. วาดโครงสร้างสถาปัตยกรรมหน้าต่างหลัก ---
+                this.contentDiv.innerHTML = this.getKpiHtml() + `
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in-up">
+                        
+                        <div class="glass-card p-6 rounded-3xl border border-slate-200 shadow-sm lg:col-span-2">
+                            <h3 class="font-bold text-slate-800 mb-1">3.3 วิเคราะห์ประเภทและแหล่งที่มาข้อบกพร่อง</h3>
+                            <p class="text-xs text-slate-400 mb-6">โครงสร้างวงแหวนแสดงความเชื่อมโยงระหว่างแหล่งตรวจพบ (วงนอก) และประเภทปัญหา (วงใน)</p>
+                            <div class="flex flex-col sm:flex-row items-center gap-8">
+                                <div class="relative h-56 w-56 shrink-0"><canvas id="twoTierPie"></canvas></div>
+                                <div class="flex-1 w-full space-y-4">
+                                    <div class="p-4 bg-amber-50 rounded-2xl border border-amber-100"><div class="flex items-center gap-2 mb-2"><span class="w-3 h-3 rounded-full bg-[#f59e0b]"></span><p class="text-sm font-bold text-amber-900">ตรวจพบโดย สคร. (${srcSkor})</p></div></div>
+                                    <div class="p-4 bg-blue-50 rounded-2xl border border-blue-100"><div class="flex items-center gap-2 mb-2"><span class="w-3 h-3 rounded-full bg-[#3b82f6]"></span><p class="text-sm font-bold text-blue-900">ตรวจจากแผน Enabler (${srcSeam})</p></div></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-card p-6 rounded-3xl border border-slate-200 shadow-sm">
+                            <h3 class="font-bold text-slate-800 mb-4">3.2 ความคืบหน้าตามเกต</h3>
+                            <div id="phaseProgressContainer" class="space-y-4 mt-6"></div>
+                        </div>
+                        
+                        <div class="glass-card p-6 rounded-3xl border border-slate-200 shadow-sm lg:col-span-3 overflow-hidden">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                                <div>
+                                    <h3 class="font-bold text-slate-800 text-base">3.1 ตารางเทียบความเคลื่อนไหวคะแนนรายหัวข้อ (${years.length} ปี)</h3>
+                                    <p class="text-[11px] text-slate-400">ระบุคู่ปีเพื่อทำแถบสีไฮไลท์แนวตั้ง <strong class="text-purple-600">(คลิกที่ตัวเลขอัตราคะแนนย่อย เพื่อเปิดส่องการ์ดประวัติเชิงลึก)</strong></p>
+                                </div>
+                                <div class="flex items-center gap-1.5 bg-white/80 border border-slate-200 shadow-sm rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700">
+                                    <span class="text-blue-600">🔵 ปีฐาน:</span>
+                                    <select id="auditor-compare-y1" class="bg-transparent text-blue-700 outline-none cursor-pointer font-extrabold mr-2">
+                                        ${renderYearOptions(prevYear)}
+                                    </select>
+                                    <span class="text-slate-300 font-normal mr-2">|</span>
+                                    <span class="text-purple-600">🔮 ปีเทียบ:</span>
+                                    <select id="auditor-compare-y2" class="bg-transparent text-purple-700 outline-none cursor-pointer font-extrabold">
+                                        ${renderYearOptions(latestYear)}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div id="auditor-insight-box" class="min-h-[40px] mb-4"></div>
+
+                            <div class="max-h-96 overflow-y-auto rounded-2xl border border-slate-100">
+                                <table class="w-full text-left table-fixed">
+                                    <thead class="sticky top-0 bg-white/95 backdrop-blur shadow-sm z-10">
+                                        <tr class="text-xs text-slate-500 uppercase font-bold border-b border-slate-200">
+                                            <th class="w-2/5 p-3 pl-4">หัวข้อการประเมิน (Topic Name)</th>
+                                            ${years.map(y => `<th id="th-grid-${y}" class="p-3 text-center transition-all duration-300 w-[10%]">${y}</th>`).join('')}
+                                        </tr>
+                                    </thead>
+                                    <tbody id="heatmap-rows-container"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>`;
+
+                // --- 3. สั่งวาดกราฟ 3.3 Two-Tier Doughnut ---
+                this.charts.push(new Chart(document.getElementById('twoTierPie'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Process', 'Result', 'Enabler Plan', 'สคร.'],
+                        datasets: [
+                            { data: [totalProcess, totalResult], backgroundColor: ['#8b5cf6', '#ec4899'], labels: ['Process', 'Result'] },
+                            { data: [srcSeam, srcSkor], backgroundColor: ['#3b82f6', '#f59e0b'], labels: ['Enabler', 'สคร.'] }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: function(ctx) { return ctx.dataset.labels[ctx.dataIndex] + ': ' + ctx.raw; } } }, legend: { display: false } } }
+                }));
+
+                // --- 4. สั่งวาดหลอดพลัง 3.2 Phase Progress ---
+                const phaseKeys = ['phase-plan', 'phase-eo-ec', 'phase-assessment', 'phase-document', 'phase-site-visit'];
+                const phaseNames = ['แผนปรับปรุง', 'รายงาน EO', 'Assessment', 'เข้าระบบ', 'Site Visit'];
+                let phaseHtml = '';
+                phaseKeys.forEach((pk, i) => {
+                    let totalP = this.data.ofis.length;
+                    let doneP = this.data.ofis.filter(o => o.phases?.[pk]?.status === 'Done' || o.phases?.[pk]?.status === 'Qualified').length;
+                    let pct = totalP ? Math.round((doneP/totalP)*100) : 0;
+                    phaseHtml += `
+                        <div>
+                            <div class="flex justify-between text-xs font-bold text-slate-600 mb-1"><span>Phase ${i+1}: ${phaseNames[i]}</span><span>${pct}% (${doneP}/${totalP})</span></div>
+                            <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden"><div class="bg-blue-500 h-3 rounded-full" style="width: ${pct}%"></div></div>
+                        </div>`;
+                });
+                document.getElementById('phaseProgressContainer').innerHTML = phaseHtml;
+
+                // ==========================================
+                // 🔄 ENGINE: คำนวณความเคลื่อนไหวข้ามคู่ปีบนตาราง 6 ช่อง
+                // ==========================================
+                const runAuditorHeatmapPipeline = () => {
+                    const y1 = document.getElementById('auditor-compare-y1').value;
+                    const y2 = document.getElementById('auditor-compare-y2').value;
+
+                    years.forEach(y => {
+                        const th = document.getElementById(`th-grid-${y}`);
+                        if (th) {
+                            if (y === y1) th.className = "p-3 text-center bg-blue-50 text-blue-700 font-black border-x border-blue-100 rounded-t-xl";
+                            else if (y === y2) th.className = "p-3 text-center bg-purple-50 text-purple-700 font-black border-x border-purple-100 rounded-t-xl";
+                            else th.className = "p-3 text-center text-slate-500 font-bold";
+                        }
+                    });
+
+                    let rowsHtml = '';
+                    let totalDroppedTopics = 0, totalImprovedTopics = 0;
+
+                    this.data.scores.forEach((enabler, enablerIdx) => {
+                        enabler.topics?.forEach((t, topicIdx) => {
+                            let rowColsHtml = '';
+                            const targetScore1 = t.scoreByYear?.[y1];
+                            const targetScore2 = t.scoreByYear?.[y2];
+
+                            if (targetScore1 !== null && targetScore1 !== undefined && targetScore2 !== null && targetScore2 !== undefined) {
+                                if (targetScore2 < targetScore1) totalDroppedTopics++;
+                                if (targetScore2 > targetScore1) totalImprovedTopics++;
+                            }
+                            
+                            for(let i=0; i<years.length; i++) {
+                                const currentYear = years[i];
+                                const current = t.scoreByYear?.[currentYear];
+                                const prev = i > 0 ? t.scoreByYear?.[years[i-1]] : current;
+                                
+                                let colorClass = 'bg-slate-100 text-slate-400';
+                                if (current !== null && current !== undefined) {
+                                    if (!prev || current === prev) colorClass = 'bg-amber-300 text-amber-900';
+                                    else if (current > prev) colorClass = 'bg-emerald-400 text-emerald-900';
+                                    else if (current < prev) colorClass = 'bg-rose-500 text-white font-bold';
+                                }
+                                let isFocusColumn = '';
+                                if (currentYear === y1) isFocusColumn = 'border-x border-blue-200 bg-blue-50/10';
+                                if (currentYear === y2) isFocusColumn = 'border-x border-purple-200 bg-purple-50/10';
+
+                                // 🌟 [จุดอัปเกรด]: ฝังคำสั่งเปิด Modal รายหัวข้อ เมื่อกดลงบนบล็อกคะแนน
+                                rowColsHtml += `
+                                    <td class="p-1 text-center ${isFocusColumn}">
+                                        <div class="heatmap-cell text-center text-[10px] py-1 rounded shadow-sm font-mono cursor-pointer hover:scale-[1.05] active:scale-95 transition-all duration-200 ${colorClass}"
+                                             onclick="window.showTopicDetailModal(${enablerIdx}, ${topicIdx}, '${currentYear}')" title="คลิกส่องประวัติใบงานหัวข้อนี่">
+                                            ${current !== null && current !== undefined ? Number(current).toFixed(1) : '-'}
+                                        </div>
+                                    </td>`;
+                            }
+
+                            rowsHtml += `<tr class="border-b border-slate-100 hover:bg-slate-50/80 transition-colors"><td class="p-2 text-xs font-semibold text-slate-700 truncate max-w-xs" title="${t.topicName}"><span class="bg-blue-50 text-blue-600 border border-blue-100 px-1.5 py-0.5 rounded font-mono text-[10px] mr-2 font-bold">${enabler.code}</span>${t.topicName}</td>${rowColsHtml}</tr>`;
+                        });
+                    });
+
+                    document.getElementById('heatmap-rows-container').innerHTML = rowsHtml;
+                    
+                    const insightBox = document.getElementById('auditor-insight-box');
+                    if (totalDroppedTopics > 0) {
+                        insightBox.innerHTML = `<div class="p-3.5 bg-rose-50 border border-rose-100 rounded-2xl text-xs text-rose-800 flex items-start gap-2.5 animate-fade-in-up shadow-sm"><span class="text-base">🚨</span><div><strong>ผลวิเคราะห์ส่วนต่าง (Audit Finding) จากปี ${y1} ไปยังปี ${y2}:</strong> พบดัชนีที่มีความเสี่ยงเนื่องจาก <strong>คะแนนดิ่งลงจำนวน ${totalDroppedTopics} หัวข้อ</strong> และยกระดับดีขึ้นสำเร็จ ${totalImprovedTopics} หัวข้อ</div></div>`;
+                    } else {
+                        insightBox.innerHTML = `<div class="p-3.5 bg-emerald-50 border border-emerald-100 rounded-2xl text-xs text-emerald-800 flex items-start gap-2.5 animate-fade-in-up shadow-sm"><span class="text-base">✅</span><div><strong>สรุปความก้าวหน้าจากปี ${y1} ไปยังปี ${y2}:</strong> สถานการณ์อยู่ในเกณฑ์ควบคุมดีมาก ไม่พบหัวข้อที่มีเกณฑ์คะแนนลดลงเพิ่มเติมในรอบปีนี้ โดยมีหัวข้อพัฒนากระโดดเด่นรวม <strong>${totalImprovedTopics} หัวข้อ</strong></div></div>`;
+                    }
+                };
+
+                // ==========================================
+                // 🔮 WINDOW MODAL COMPONENT: ป๊อปอัพเจาะลึกคะแนนรายหัวข้อประเมิน
+                // ==========================================
+                window.showTopicDetailModal = (enablerIdx, topicIdx, year) => {
+                    const enabler = this.data.scores[enablerIdx];
+                    const t = enabler.topics[topicIdx];
+                    const current = t.scoreByYear?.[year];
+                    
+                    const prevYear = String(parseInt(year) - 1);
+                    const prev = t.scoreByYear?.[prevYear];
+                    
+                    let trendHtml = '';
+                    if (current !== null && current !== undefined && prev !== null && prev !== undefined) {
+                        const diff = current - prev;
+                        if (diff > 0) trendHtml = `<span class="text-emerald-600 font-bold bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-lg">📈 พัฒนาขึ้น +${diff.toFixed(2)}</span>`;
+                        else if (diff < 0) trendHtml = `<span class="text-rose-600 font-bold bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-lg">📉 ร่วงลง ${diff.toFixed(2)}</span>`;
+                        else trendHtml = `<span class="text-amber-600 font-bold bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-lg">➖ คะแนนเท่าเดิม</span>`;
+                    } else {
+                        trendHtml = `<span class="text-slate-400 bg-slate-50 border px-2 py-0.5 rounded-lg">➖ ไม่มีเกณฑ์เทียบปีก่อนหน้า</span>`;
+                    }
+
+                    // คัดกรองใบงานข้อบกพร่อง (OFI) ในคลังระบบที่เชื่อมโยงกับหมวดกระบวนการนี้
+                    const relatedOfis = this.data.ofis.filter(o => o.enablerCode === enabler.code && (t.topicName && o.topicName && o.topicName.includes(t.topicName.substring(0, 15))));
+
+                    const modalHtml = `
+                        <div id="topic-modal-overlay" class="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-300 opacity-0">
+                            <div class="glass-card max-w-2xl w-full p-6 rounded-3xl shadow-2xl flex flex-col max-h-[80vh] transform scale-95 transition-all duration-300">
+                                
+                                <div class="flex justify-between items-start border-b border-slate-200/40 pb-4 mb-4">
+                                    <div class="space-y-1">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="bg-purple-600 text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded shadow-sm">${enabler.code}</span>
+                                            <span class="bg-slate-100 text-slate-700 text-[10px] font-mono font-bold px-2 py-0.5 rounded border">รอบปีประเมิน: ${year}</span>
+                                        </div>
+                                        <h4 class="text-sm font-bold text-slate-800 leading-relaxed mt-1">🔍 หัวข้อ: ${t.topicName}</h4>
+                                    </div>
+                                    <button id="close-topic-modal-btn" class="p-1.5 hover:bg-slate-100 rounded-full text-slate-400 shrink-0"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                                </div>
+                                
+                                <div class="flex-1 overflow-y-auto space-y-4 pr-1">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
+                                        <div>
+                                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">สรุปคะแนนประจำปี ${year}</p>
+                                            <p class="text-3xl font-black text-purple-700 font-mono mt-0.5">${current !== null && current !== undefined ? Number(current).toFixed(2) : '-'}</p>
+                                        </div>
+                                        <div class="flex flex-col justify-center sm:items-end">
+                                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider sm:mb-1">ทิศทางวิเคราะห์ความเสี่ยง</p>
+                                            <div class="text-xs mt-0.5">${trendHtml}</div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h5 class="text-xs font-bold text-slate-700 mb-2">📊 ประวัติเส้นคะแนนสะสมย้อนหลัง</h5>
+                                        <div class="flex gap-2 overflow-x-auto pb-1.5">
+                                            ${years.map(y => {
+                                                const yScore = t.scoreByYear?.[y];
+                                                const isCurrentCol = y === year;
+                                                return `
+                                                    <div class="px-3 py-2 bg-white border ${isCurrentCol ? 'border-purple-500 bg-purple-50/30' : 'border-slate-100'} rounded-xl min-w-[75px] text-center shadow-sm">
+                                                        <p class="text-[10px] font-bold ${isCurrentCol ? 'text-purple-700 font-black' : 'text-slate-400'}">${y}</p>
+                                                        <p class="text-xs font-black text-slate-700 font-mono mt-0.5">${yScore !== null && yScore !== undefined ? Number(yScore).toFixed(1) : '-'}</p>
+                                                    </div>`;
+                                            }).join('')}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h5 class="text-xs font-bold text-slate-700 mb-2">📋 เอกสารใบงานข้อบกพร่อง (OFI) ที่ตรวจพบในหมวดนี้ (${relatedOfis.length} รายการ)</h5>
+                                        <div class="space-y-2">
+                                            ${relatedOfis.length === 0 ? '<p class="text-xs text-slate-400 italic bg-white p-4 rounded-xl border border-slate-100 text-center shadow-sm">ไม่พบเอกสารใบงานผูกสัมพันธ์ในกระบวนการนี้</p>' : 
+                                            relatedOfis.map(o => `
+                                                <div class="p-3 bg-white border border-slate-200/70 rounded-2xl flex justify-between items-center gap-2 hover:border-purple-200 shadow-sm transition-colors">
+                                                    <div class="space-y-1">
+                                                        <div class="flex items-center gap-1.5"><span class="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded text-[10px] font-bold font-mono border border-blue-100">${o.id}</span><span class="text-[10px] text-slate-400 font-medium">ระดับภัย: ${o.ofiLevel || '-'}</span></div>
+                                                        <p class="text-xs font-bold text-slate-700 leading-relaxed truncate max-w-sm" title="${o.topicName}">${o.topicName || 'OFI Task'}</p>
+                                                    </div>
+                                                    <span class="text-[10px] py-0.5 px-2 rounded-full border bg-slate-50 text-slate-500 font-bold shrink-0">${o.overallStatus}</span>
+                                                </div>`).join('')}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+
+                    const oldModal = document.getElementById('topic-modal-overlay');
+                    if (oldModal) oldModal.remove();
+                    document.body.insertAdjacentHTML('beforeend', modalHtml);
+                    const overlay = document.getElementById('topic-modal-overlay');
+                    const card = overlay.querySelector('.glass-card');
+                    setTimeout(() => { overlay.classList.remove('opacity-0'); card.classList.remove('scale-95'); }, 15);
+                    const closeModal = () => { overlay.classList.add('opacity-0'); card.classList.add('scale-95'); setTimeout(() => overlay.remove(), 250); };
+                    document.getElementById('close-topic-modal-btn').addEventListener('click', closeModal);
+                    overlay.addEventListener('click', (e) => { if(e.target === overlay) closeModal(); });
+                };
+
+                runAuditorHeatmapPipeline();
+                document.getElementById('auditor-compare-y1').addEventListener('change', runAuditorHeatmapPipeline);
+                document.getElementById('auditor-compare-y2').addEventListener('change', runAuditorHeatmapPipeline);
+            }
+
+
+            // ⚙️ ROLE 3: DEPARTMENT / OWNER
+            renderOwnerView(ownerId) {
+                const myTasks = this.data.ofis.filter(o => o.elementOwnerId === ownerId);
+                
+                // 4.1 Gantt Logic (HTML Grid)
+                const phaseKeys = ['phase-plan', 'phase-eo-ec', 'phase-assessment', 'phase-document', 'phase-site-visit'];
+                const statusColors = { 'Done': 'bg-emerald-500', 'Qualified': 'bg-emerald-600', 'In progress': 'bg-amber-400', 'Delayed': 'bg-rose-500', 'Not started': 'bg-slate-200' };
+                
+                let ganttRows = myTasks.map(o => {
+                    let blocks = phaseKeys.map(pk => {
+                        let st = o.phases?.[pk]?.status || 'Not started';
+                        return `<div class="h-6 w-full rounded-sm ${statusColors[st] || 'bg-slate-200'} border border-white/50" title="${st}"></div>`;
+                    }).join('');
+                    return `<div class="grid grid-cols-6 gap-2 items-center text-sm py-2 border-b border-slate-100"><div class="font-bold text-slate-700 truncate" title="${o.enablerCode}">${o.id}</div>${blocks}</div>`;
+                }).join('');
+                if(!ganttRows) ganttRows = '<div class="text-center py-10 text-slate-400">ไม่มีงานในความรับผิดชอบ</div>';
+
+                this.contentDiv.innerHTML = this.getKpiHtml() + `
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="glass-card p-6 rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                            <h3 class="font-bold text-slate-800 mb-4">4.1 ตารางติดตามสถานะเฟสงาน (Gantt-Grid)</h3>
+                            <div class="grid grid-cols-6 gap-2 text-[10px] font-bold text-slate-400 uppercase text-center mb-2"><div class="text-left">Task ID</div><div>Plan</div><div>EO/EC</div><div>Assess</div><div>Doc</div><div>Site</div></div>
+                            <div class="max-h-64 overflow-y-auto">${ganttRows}</div>
+                            <div class="mt-4 flex flex-wrap gap-3 text-[10px] font-bold uppercase"><span class="flex items-center gap-1"><span class="w-3 h-3 bg-emerald-500 rounded-sm"></span> สำเร็จ</span><span class="flex items-center gap-1"><span class="w-3 h-3 bg-amber-400 rounded-sm"></span> กำลังทำ</span><span class="flex items-center gap-1"><span class="w-3 h-3 bg-rose-500 rounded-sm"></span> ล่าช้า</span></div>
+                        </div>
+                        <div class="glass-card p-6 rounded-3xl border border-slate-200 shadow-sm">
+                            <h3 class="font-bold text-slate-800 mb-4">4.2 ประเด็นปัญหาที่พบบ่อย (Issue Tags)</h3>
+                            <div class="h-64"><canvas id="tagChart"></canvas></div>
+                        </div>
+                    </div>`;
+
+                // 4.2 Horizontal Bar Logic
+                let tagCounts = {};
+                myTasks.forEach(o => { o.issueTags?.forEach(t => { tagCounts[t] = (tagCounts[t] || 0) + 1; }); });
+                let sortedTags = Object.entries(tagCounts).sort((a,b)=>b[1]-a[1]);
+                
+                this.charts.push(new Chart(document.getElementById('tagChart'), {
+                    type: 'bar',
+                    data: { labels: sortedTags.map(t=>t[0]), datasets: [{ label: 'ความถี่ที่พบ', data: sortedTags.map(t=>t[1]), backgroundColor: '#8b5cf6', borderRadius: 4 }] },
+                    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+                }));
+            }
+        }
+
+        // --- AUTH & PIPELINE ---
+        window.onload = async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/owners`);
+                const json = await res.json();
+                
+                const ownerOpts = json.data.map(o => `<option value="${o.id}">${o.nameThai}</option>`).join('');
+                document.getElementById('owner-select').innerHTML = ownerOpts;
+                
+                // document.getElementById('header-role-select').innerHTML = `
+                //     <option value="executive">👑 ผู้บริหาร (Executive)</option>
+                //     <option value="auditor">🔍 ผู้ตรวจสอบ (Auditor)</option>
+                //     ${json.data.map(o => `<option value="owner:${o.id}">⚙️ ${o.nameThai}</option>`).join('')}
+                // `;
+                // 🌟 ระบบตรวจจับลิงก์แชร์อัตโนมัติ (URL Deep Linking)
+                const urlParams = new URLSearchParams(window.location.search);
+                const autoRole = urlParams.get('role');   // ดักจับคำว่า ?role=executive หรือ ?role=auditor
+                const autoOwner = urlParams.get('owner'); // ดักจับคำว่า ?owner=owner-pakorn
+
+                if (autoRole) {
+                    // ถ้าในลิงก์ระบุ ?role=executive หรือ auditor ให้ล็อกอินอัตโนมัติ
+                    fetchDashboardData(`Bearer ${autoRole}`);
+                } else if (autoOwner) {
+                    // ถ้าในลิงก์ระบุ ?owner=รหัสพนักงาน ให้ล็อกอินเข้าหน้า To-Do List ของคนนั้นทันที
+                    fetchDashboardData(`Bearer owner:${autoOwner}`);
+                }
+            } catch (e) { console.error("API Error:", e); }
+        };
+
+        function login(role) { fetchDashboardData(`Bearer ${role}`); }
+        function loginOwner() { fetchDashboardData(`Bearer owner:${document.getElementById('owner-select').value}`); }
+        function changeRoleFromHeader(val) { fetchDashboardData(`Bearer ${val}`); }
+        function logout() { location.reload(); }
+
+        async function fetchDashboardData(token) {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/dashboard-data`, { headers: { 'Authorization': token } });
+                if (!res.ok) throw new Error("Auth Failed");
+                const result = await res.json();
+                
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('main-dashboard').classList.remove('hidden');
+                document.getElementById('display-role').innerText = result.role;
+                
+                let ownerId = token.includes('owner:') ? token.split('owner:')[1] : null;
+                // document.getElementById('header-role-select').value = ownerId ? `owner:${ownerId}` : result.role;
+
+                const dataService = new OFIDataService(result.data);
+                const app = new DashboardApp(dataService);
+                app.renderView(result.role, ownerId);
+
+            } catch (error) { 
+                console.error("🔴 บั๊กหลังบ้านหรือเครือข่ายขัดข้อง:", error);
+                alert("เกิดข้อผิดพลาดในการโหลดข้อมูล หรือเซิร์ฟเวอร์หลังบ้านขัดข้อง!");
+            }
+        }
+    </script>
+</body>
+</html>
