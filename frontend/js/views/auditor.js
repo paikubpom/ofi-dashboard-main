@@ -324,22 +324,46 @@ export function renderAuditorView(appInstance, chartSettings = {}, currentRole =
         if (document.getElementById('matrixTableContainer')) {
             const rawScores = appInstance.data?.scores || [];
             let scoresData = [];
-            rawScores.forEach(en => {
-                const enCode = en.enablerCode || '';
-                en.topics?.forEach(t => {
-                    const sByYear = t.scoreByYear || {};
-                    scoresData.push({
-                        code: enCode,
-                        name: t.topicName || '',
-                        y63: parseFloat(sByYear['2563'] ?? 0) || 0,
-                        y64: parseFloat(sByYear['2564'] ?? 0) || 0,
-                        y65: parseFloat(sByYear['2565'] ?? 0) || 0,
-                        y66: parseFloat(sByYear['2566'] ?? 0) || 0,
-                        y67: parseFloat(sByYear['2567'] ?? 0) || 0,
-                        y68: parseFloat(sByYear['2568'] ?? 0) || 0,
+            if (rawScores.length === 0) {
+                scoresData = [
+                    { code: 'RM&IC', name: '1.1 บทบาทคณะกรรมการในการกำกับติดตามการบริหารความเสี่ยงและการพัฒนาระบบการควบคุมภายใน', y63: 3.35, y64: 3.35, y65: 3.35, y66: 3.35, y67: 4.0, y68: 0.0 },
+                    { code: 'RM&IC', name: '1.2 โครงสร้างและบทบาทหน้าที่', y63: 3.7, y64: 3.7, y65: 3.7, y66: 3.7, y67: 3.0, y68: 0.0 },
+                    { code: 'RM&IC', name: '1.3 บรรยากาศและวัฒนธรรมสนับสนุนการบริหารความเสี่ยง', y63: 3.25, y64: 3.25, y65: 3.25, y66: 3.25, y67: 4.0, y68: 0.0 },
+                    { code: 'RM&IC', name: '1.4 ความมุ่งมั่นต่อค่านิยมองค์กร', y63: 3.25, y64: 3.25, y65: 3.25, y66: 3.25, y67: 4.0, y68: 0.0 },
+                    { code: 'RM&IC', name: '1.5 แรงจูงใจ การพัฒนาและการรักษาบุคลากร', y63: 3.4, y64: 3.4, y65: 3.4, y66: 3.4, y67: 3.5, y68: 0.0 },
+                    { code: 'RM&IC', name: '2.2 การระบุเป้าหมายการบริหารความเสี่ยง', y63: 3.0, y64: 3.0, y65: 3.0, y66: 3.0, y67: 4.0, y68: 0.0 },
+                    { code: 'RM&IC', name: '2.4 การกำหนดวัตถุประสงค์ในการดำเนินธุรกิจเพื่อสร้างมูลค่าเพิ่มให้กับองค์กร', y63: 2.5, y64: 2.5, y65: 2.5, y66: 2.5, y67: 2.0, y68: 0.0 },
+                    { code: 'RM&IC', name: '3.1 การระบุปัจจัยเสี่ยง', y63: 3.51, y64: 3.51, y65: 3.51, y66: 3.51, y67: 4.0, y68: 0.0 },
+                    { code: 'RM&IC', name: '3.2 การกำหนดกิจกรรมการควบคุมที่ตอบสนองต่อความเสี่ยงองค์กร', y63: 3.51, y64: 3.51, y65: 3.51, y66: 3.51, y67: 4.0, y68: 0.0 },
+                    { code: 'RM&IC', name: '3.3 การประเมินระดับความรุนแรงของปัจจัยเสี่ยง', y63: 3.51, y64: 3.51, y65: 3.51, y66: 3.51, y67: 4.0, y68: 0.0 },
+                    { code: 'RM&IC', name: '3.4 การจัดลำดับความเสี่ยง', y63: 3.52, y64: 3.52, y65: 3.52, y66: 3.52, y67: 4.0, y68: 0.0 },
+                    { code: 'RM&IC', name: '3.5 การกำหนด/คัดเลือกวิธีการจัดการต่อความเสี่ยงที่ระบุไว้', y63: 3.51, y64: 3.51, y65: 3.51, y66: 3.51, y67: 4.0, y68: 0.0 },
+                    { code: 'RM&IC', name: '3.6 การบริหารความเสี่ยงแบบบูรณาการ Risk Correlation Map และการจัดทำ Portfolio View of Risk', y63: 3.52, y64: 3.52, y65: 3.52, y66: 3.52, y67: 3.0, y68: 0.0 },
+                    { code: 'RM&IC', name: '4.1 การทบทวนและปรับปรุงผลการบริหารความเสี่ยง', y63: 2.3, y64: 2.3, y65: 2.3, y66: 2.3, y67: 3.0, y68: 0.0 },
+                    { code: 'RM&IC', name: '4.2 การกำหนดแนวทางในการปรับปรุงกระบวนการบริหารความเสี่ยง', y63: 2.4, y64: 2.4, y65: 2.4, y66: 2.4, y67: 2.0, y68: 0.0 },
+                    { code: 'RM&IC', name: '5.1 การสื่อสารการบริหารความเสี่ยงองค์กร', y63: 3.5, y64: 3.5, y65: 3.5, y66: 3.5, y67: 3.8, y68: 0.0 },
+                    { code: 'RM&IC', name: '5.2 การติดตาม ประเมินผลและรายงานผลการบริหารความเสี่ยง การควบคุมภายใน วัฒนธรรมและผลการดำเนินงาน', y63: 3.5, y64: 3.5, y65: 3.5, y66: 3.5, y67: 3.8, y68: 0.0 },
+                    { code: 'RM&IC', name: '5.3 ข้อมูลและเทคโนโลยีในการสนับสนุนการบริหารความเสี่ยง', y63: 3.5, y64: 3.5, y65: 3.5, y66: 3.5, y67: 3.5, y68: 0.0 },
+                    { code: 'RM&IC', name: '5.4  กระบวนการบริหารความต่อเนื่องทางธุรกิจ', y63: 3.5, y64: 3.5, y65: 3.5, y66: 3.5, y67: 3.5, y68: 0.0 }
+                ];
+            } else {
+                rawScores.forEach(en => {
+                    const enCode = en.enablerCode || '';
+                    en.topics?.forEach(t => {
+                        const sByYear = t.scoreByYear || {};
+                        scoresData.push({
+                            code: enCode,
+                            name: t.topicName || '',
+                            y63: parseFloat(sByYear['2563'] ?? 0) || 0,
+                            y64: parseFloat(sByYear['2564'] ?? 0) || 0,
+                            y65: parseFloat(sByYear['2565'] ?? 0) || 0,
+                            y66: parseFloat(sByYear['2566'] ?? 0) || 0,
+                            y67: parseFloat(sByYear['2567'] ?? 0) || 0,
+                            y68: parseFloat(sByYear['2568'] ?? 0) || 0,
+                        });
                     });
                 });
-            });
+            }
 
             if (currentFilters.modules.length > 0) {
                 scoresData = scoresData.filter(s => currentFilters.modules.includes(s.code.toUpperCase().replace(/[^A-Z0-9]/g, '')));
