@@ -523,6 +523,26 @@ export function renderTopicScoreMatrix(containerId, dataRows) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
+    // Reset to page 1 if the dataset changes
+    const rowsSignature = dataRows.map(r => r.code + ':' + r.name).join(',');
+    if (container.dataset.signature !== rowsSignature) {
+        container.dataset.page = 1;
+        container.dataset.signature = rowsSignature;
+    }
+
+    let currentPage = parseInt(container.dataset.page || 1);
+    const itemsPerPage = 5;
+    const totalItems = dataRows.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+    container.dataset.page = currentPage;
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+    const pageRows = dataRows.slice(startIndex, endIndex);
+
     let html = `
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-[11px] mt-4">
@@ -548,7 +568,7 @@ export function renderTopicScoreMatrix(containerId, dataRows) {
         return 'bg-[#FCD34D] text-amber-900'; // สีเหลือง/ส้ม (เช่น 3.0)
     };
 
-    dataRows.forEach(row => {
+    pageRows.forEach(row => {
         html += `
             <tr class="hover:bg-slate-50/50">
                 <td class="py-2.5 pr-4 font-medium text-slate-800">
@@ -565,5 +585,40 @@ export function renderTopicScoreMatrix(containerId, dataRows) {
     });
 
     html += `</tbody></table></div>`;
+
+    if (totalPages > 1) {
+        let pagesHtml = '';
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === currentPage) {
+                pagesHtml += `<span class="px-2.5 py-1 bg-[#00508F] text-white text-xs font-bold rounded-lg border border-[#00508F] shadow-sm">${i}</span>`;
+            } else {
+                pagesHtml += `<button data-target-page="${i}" class="btn-matrix-page px-2.5 py-1 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition">${i}</button>`;
+            }
+        }
+
+        html += `
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-3 border-t border-slate-100">
+                <div class="text-[11px] font-bold text-slate-400">แสดง ${startIndex + 1} - ${endIndex} จากทั้งหมด ${totalItems} รายการ</div>
+                <div class="flex items-center gap-1">
+                    <button data-target-page="${currentPage - 1}" class="btn-matrix-page px-2.5 py-1 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition" ${currentPage === 1 ? 'disabled' : ''}>&laquo; ก่อนหน้า</button>
+                    ${pagesHtml}
+                    <button data-target-page="${currentPage + 1}" class="btn-matrix-page px-2.5 py-1 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition" ${currentPage === totalPages ? 'disabled' : ''}>ถัดไป &raquo;</button>
+                </div>
+            </div>
+        `;
+    }
+
     container.innerHTML = html;
+
+    if (!container.dataset.listenerAttached) {
+        container.addEventListener('click', (e) => {
+            const btn = e.target.closest('.btn-matrix-page');
+            if (btn && !btn.disabled) {
+                const targetPage = parseInt(btn.getAttribute('data-target-page'));
+                container.dataset.page = targetPage;
+                renderTopicScoreMatrix(containerId, dataRows);
+            }
+        });
+        container.dataset.listenerAttached = 'true';
+    }
 }
