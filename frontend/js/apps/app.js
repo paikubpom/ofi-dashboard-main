@@ -36,8 +36,9 @@ class DashboardApp {
         this.clear();
         try {
             // โหลดข้อมูลแดชบอร์ดและสิทธิ์การแสดงผลกราฟแบบคู่ขนาน
+            const safeToken = token.replace(/owner:(.*)$/, (match, ownerId) => 'owner:' + encodeURIComponent(ownerId));
             const [dataRes, settingsRes] = await Promise.all([
-                fetch(`${this.API_BASE_URL}/api/dashboard-data?t=${Date.now()}`, { headers: { 'Authorization': token } }),
+                fetch(`${this.API_BASE_URL}/api/dashboard-data?t=${Date.now()}`, { headers: { 'Authorization': safeToken } }),
                 fetch(`${this.API_BASE_URL}/api/chart-settings?t=${Date.now()}`)
             ]);
 
@@ -124,7 +125,7 @@ class DashboardApp {
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="font-bold text-slate-800">${chartSettings["chart-issue-tags"]?.title || '4.2 ประเด็นปัญหาที่พบบ่อย (Issue Tags)'}</h3>
                         <button class="btn-expand-chart p-1 text-slate-400 hover:text-blue-600 hover:bg-slate-50 rounded-lg transition" data-chart-id="chart-issue-tags" title="ขยายกราฟ (Zoom Chart)">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4m12 4V4h-4M4 16v4h4m12-4v4h-4" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4m12 4V4h-4M4 16v4h4m12-4v4h-4" /></svg>
                         </button>
                     </div>
                     <div class="h-64"><canvas id="tagChart"></canvas></div>

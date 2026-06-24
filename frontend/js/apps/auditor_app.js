@@ -21,9 +21,9 @@ class AuditorApp {
         if (this.flagsDiv) this.flagsDiv.innerHTML = '';
     }
 
-    getKpiHtml() {
+    getKpiHtml(kpisOverride) {
         if (!this.data) return '';
-        const kpis = this.data.getKPIs();
+        const kpis = kpisOverride || this.data.getKPIs();
         return `
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6">
                 <div class="glass-card p-5 rounded-2xl border border-slate-200 shadow-sm"><p class="text-xs text-slate-400 font-bold uppercase">1.1 รายการ OFI ที่ต้องตรวจสอบ</p><p class="text-4xl font-black text-slate-800 mt-2">${kpis.total}</p></div>
@@ -52,7 +52,7 @@ class AuditorApp {
 
             const headerEl = document.getElementById('global-header');
             if (headerEl) {
-                headerEl.innerHTML = getSharedHeaderHtml('🔍 OFI Compliance Dashboard for AUDITOR', 'bg-teal-600', false, '', syncTimeStr);
+                headerEl.innerHTML = getSharedHeaderHtml('🔍 OFI Dashboard for AUDITOR', 'bg-teal-600', false, '', syncTimeStr);
             }
             
             const flags = this.data.detectRedFlags(this.API_BASE_URL);

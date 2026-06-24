@@ -10,7 +10,7 @@ export function showSharedGlassModal(title, subtitle, contentHtml, size = 'md', 
                 <div class="flex justify-between items-center border-b border-slate-200/40 pb-4 mb-4">
                     <div>
                         <h4 class="text-base font-bold text-slate-800">${title}</h4>
-                        <p class="text-[11px] text-slate-400 mt-0.5">${subtitle}</p>
+                        <p class="text-[11px] text-slate-600 mt-0.5 font-bold">${subtitle}</p>
                     </div>
                     <button id="close-global-modal-btn" class="p-1.5 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -57,6 +57,300 @@ export function showSharedGlassModal(title, subtitle, contentHtml, size = 'md', 
 }
 
 /**
+ * 📊 ฟังก์ชันวิเคราะห์และสรุปผลข้อมูลกราฟเป็นภาษาไทยแบบไดนามิก (Dynamic Chart Summary Generator)
+ */
+function generateChartSummaryHtml(chart, title) {
+    const data = chart.data;
+    if (!data || !data.labels || !data.datasets || data.datasets.length === 0) {
+        return `
+            <div class="flex items-center gap-2 text-slate-500 font-medium">
+                <span>📊</span> <span>ไม่พบข้อมูลสำหรับการสรุปสถิติ</span>
+            </div>
+        `;
+    }
+
+    const labels = data.labels;
+    const datasets = data.datasets;
+    const isScore = chart.config.options?.plugins?.valueLabels?.isScore === true;
+    
+    const formatVal = (val) => {
+        if (val === null || val === undefined) return '-';
+        return isScore ? val.toFixed(4) : Math.round(val).toLocaleString();
+    };
+
+    let html = `
+        <div class="flex flex-col gap-3 font-sans text-left">
+            <div class="flex items-center gap-2 border-b border-slate-200/60 pb-2">
+                <span class="text-base text-blue-600">📊</span>
+                <span class="text-[13px] font-extrabold text-[#00508F]">วิเคราะห์สรุปสถิติ: ${title.trim()}</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+    `;
+
+    const isStacked = chart.config.options?.scales?.x?.stacked || chart.config.options?.scales?.y?.stacked;
+
+    if (datasets.length <= 2) {
+        // Detailed card layout for small number of datasets
+        datasets.forEach((dataset, dsIdx) => {
+            const dsName = dataset.label || `ชุดข้อมูลที่ ${dsIdx + 1}`;
+            const validValues = dataset.data
+                .map((v, i) => {
+                    let numericValue = v;
+                    if (v && typeof v === 'object') {
+                        numericValue = v.y !== undefined ? v.y : (v.v !== undefined ? v.v : null);
+                    }
+                    return { value: numericValue, label: labels[i] || `รายการที่ ${i + 1}` };
+                })
+                .filter(item => item.value !== null && item.value !== undefined && !isNaN(item.value));
+                
+            if (validValues.length === 0) return;
+
+            const sum = validValues.reduce((acc, item) => acc + item.value, 0);
+            const avg = sum / validValues.length;
+            
+            let maxItem = validValues[0];
+            let minItem = validValues[0];
+            validValues.forEach(item => {
+                if (item.value > maxItem.value) maxItem = item;
+                if (item.value < minItem.value) minItem = item;
+            });
+
+            const color = dataset.borderColor || dataset.backgroundColor || '#3B82F6';
+
+            html += `
+                <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex flex-col gap-1.5">
+                    <div class="font-bold text-[12px] text-slate-800 flex items-center gap-1.5 border-b border-slate-50 pb-1 mb-1">
+                        <span class="w-2.5 h-2.5 rounded-full inline-block" style="background-color: ${Array.isArray(color) ? color[0] : color}"></span>
+                        <span>${dsName}</span>
+                    </div>
+                    <div class="flex flex-col gap-1 text-[12px] text-slate-600">
+                        <div class="flex justify-between items-center">
+                            <span>🏷️ จำนวนรายการ:</span>
+                            <span class="font-semibold text-slate-800">${validValues.length} รายการ</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span>📈 ค่าเฉลี่ย (Average):</span>
+                            <span class="font-bold text-blue-600">${formatVal(avg)}</span>
+                        </div>
+                        <div class="flex justify-between items-start gap-4">
+                            <span>🏆 ค่าสูงสุด (Max):</span>
+                            <span class="font-bold text-emerald-600 text-right">${formatVal(maxItem.value)} <span class="text-[10px] font-bold text-slate-600">(${maxItem.label})</span></span>
+                        </div>
+                        <div class="flex justify-between items-start gap-4">
+                            <span>⚠️ ค่าต่ำสุด (Min):</span>
+                            <span class="font-bold text-amber-600 text-right">${formatVal(minItem.value)} <span class="text-[10px] font-bold text-slate-600">(${minItem.label})</span></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        // Compact list layout for more than 2 datasets
+        html += `
+            <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex flex-col gap-2 col-span-full">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-[11px] border-collapse">
+                        <thead>
+                            <tr class="text-slate-600 font-extrabold border-b border-slate-200">
+                                <th class="py-1">ชุดข้อมูล</th>
+                                <th class="py-1 text-center">ค่าเฉลี่ย</th>
+                                <th class="py-1 text-right">ค่าสูงสุด (หมวดหมู่)</th>
+                                <th class="py-1 text-right">ค่าต่ำสุด (หมวดหมู่)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
+        `;
+        datasets.forEach((dataset, dsIdx) => {
+            const dsName = dataset.label || `ชุดข้อมูลที่ ${dsIdx + 1}`;
+            const validValues = dataset.data
+                .map((v, i) => {
+                    let numericValue = v;
+                    if (v && typeof v === 'object') {
+                        numericValue = v.y !== undefined ? v.y : (v.v !== undefined ? v.v : null);
+                    }
+                    return { value: numericValue, label: labels[i] || `รายการที่ ${i + 1}` };
+                })
+                .filter(item => item.value !== null && item.value !== undefined && !isNaN(item.value));
+            
+            if (validValues.length === 0) return;
+
+            const sum = validValues.reduce((acc, item) => acc + item.value, 0);
+            const avg = sum / validValues.length;
+            
+            let maxItem = validValues[0];
+            let minItem = validValues[0];
+            validValues.forEach(item => {
+                if (item.value > maxItem.value) maxItem = item;
+                if (item.value < minItem.value) minItem = item;
+            });
+
+            const color = dataset.borderColor || dataset.backgroundColor || '#3B82F6';
+
+            html += `
+                <tr class="hover:bg-slate-50/50">
+                    <td class="py-1.5 flex items-center gap-1.5 pr-2">
+                        <span class="w-2.5 h-2.5 rounded-full inline-block" style="background-color: ${Array.isArray(color) ? color[0] : color}"></span>
+                        <span class="font-bold text-slate-800">${dsName}</span>
+                    </td>
+                    <td class="py-1.5 text-center text-blue-600 font-bold">${formatVal(avg)}</td>
+                    <td class="py-1.5 text-right text-emerald-600 font-bold">${formatVal(maxItem.value)} <span class="text-[10px] font-bold text-slate-600">(${maxItem.label})</span></td>
+                    <td class="py-1.5 text-right text-amber-600 font-bold">${formatVal(minItem.value)} <span class="text-[10px] font-bold text-slate-600">(${minItem.label})</span></td>
+                </tr>
+            `;
+        });
+        html += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+
+    html += `</div>`; // Close grid
+
+    // Comparative summary if exactly 2 datasets
+    if (datasets.length === 2) {
+        const ds1 = datasets[0];
+        const ds2 = datasets[1];
+        const ds1Name = ds1.label || 'ปีฐาน';
+        const ds2Name = ds2.label || 'ปีเทียบ';
+        
+        let growthItems = [];
+        let declineItems = [];
+
+        labels.forEach((label, idx) => {
+            const val1 = ds1.data[idx];
+            const val2 = ds2.data[idx];
+            if (val1 !== null && val1 !== undefined && val2 !== null && val2 !== undefined) {
+                const diff = val2 - val1;
+                const percentDiff = val1 !== 0 ? (diff / val1) * 100 : 0;
+                const info = { label, val1, val2, diff, percentDiff };
+                if (diff > 0.0001) {
+                    growthItems.push(info);
+                } else if (diff < -0.0001) {
+                    declineItems.push(info);
+                }
+            }
+        });
+
+        growthItems.sort((a, b) => b.diff - a.diff);
+        declineItems.sort((a, b) => a.diff - b.diff);
+
+        let compSummary = '';
+        if (growthItems.length > 0) {
+            const topGrowth = growthItems[0];
+            compSummary += `
+                <div class="flex items-start gap-1.5 text-emerald-700 bg-emerald-50/40 p-2 rounded-lg border border-emerald-100/50">
+                    <span class="text-[14px]">📈</span>
+                    <span class="text-[11px]">
+                        <strong>พัฒนาการสูงสุด:</strong> 
+                        หมวด <strong>${topGrowth.label}</strong> เพิ่มขึ้นจาก ${formatVal(topGrowth.val1)} เป็น ${formatVal(topGrowth.val2)} 
+                        (เพิ่มขึ้น <span class="font-bold">+${formatVal(topGrowth.diff)}</span> หรือ +${topGrowth.percentDiff.toFixed(2)}%)
+                    </span>
+                </div>
+            `;
+        }
+
+        if (declineItems.length > 0) {
+            const topDecline = declineItems[0];
+            compSummary += `
+                <div class="flex items-start gap-1.5 text-amber-700 bg-amber-50/40 p-2 rounded-lg border border-amber-100/50">
+                    <span class="text-[14px]">📉</span>
+                    <span class="text-[11px]">
+                        <strong>คะแนนลดลงมากที่สุด:</strong> 
+                        หมวด <strong>${topDecline.label}</strong> ลดลงจาก ${formatVal(topDecline.val1)} เป็น ${formatVal(topDecline.val2)} 
+                        (ลดลง <span class="font-bold">${formatVal(topDecline.diff)}</span> หรือ ${topDecline.percentDiff.toFixed(2)}%)
+                    </span>
+                </div>
+            `;
+        }
+
+        if (compSummary) {
+            html += `
+                <div class="mt-2 flex flex-col gap-1.5">
+                    <div class="text-[11px] font-bold text-slate-700">🔍 วิเคราะห์การพัฒนาเปรียบเทียบ (${ds1Name} vs ${ds2Name}):</div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        ${compSummary}
+                    </div>
+                </div>
+            `;
+        }
+    } else if (chart.config.type === 'doughnut' || chart.config.type === 'pie') {
+        const dataset = datasets[0];
+        const validValues = dataset.data
+            .map((v, i) => ({ value: v, label: labels[i] }))
+            .filter(item => item.value !== null && item.value !== undefined && !isNaN(item.value));
+            
+        if (validValues.length > 0) {
+            const total = validValues.reduce((acc, item) => acc + item.value, 0);
+            const proportions = validValues.map(item => ({
+                ...item,
+                percent: total > 0 ? (item.value / total) * 100 : 0
+            })).sort((a, b) => b.value - a.value);
+
+            const topProp = proportions[0];
+            html += `
+                <div class="mt-2 p-2 bg-blue-50/30 border border-blue-100/40 rounded-xl text-[11px] text-slate-700 flex items-start gap-1.5">
+                    <span class="text-sm mt-0.5">💡</span>
+                    <span>
+                        หมวดหมู่ที่มีสัดส่วนสูงสุดคือ <strong>${topProp.label}</strong> เท่ากับ 
+                        <strong>${formatVal(topProp.value)}</strong> (คิดเป็น <strong>${topProp.percent.toFixed(2)}%</strong> ของทั้งหมดที่มีผลรวม ${formatVal(total)})
+                    </span>
+                </div>
+            `;
+        }
+    }
+
+    if (isStacked && labels.length > 0) {
+        const labelTotals = labels.map((label, idx) => {
+            let total = 0;
+            datasets.forEach(ds => {
+                const val = ds.data[idx];
+                if (val !== null && val !== undefined && !isNaN(val)) {
+                    total += val;
+                }
+            });
+            return { label, value: total };
+        });
+
+        let maxTotal = labelTotals[0];
+        let minTotal = labelTotals[0];
+        labelTotals.forEach(item => {
+            if (item.value > maxTotal.value) maxTotal = item;
+            if (item.value < minTotal.value) minTotal = item;
+        });
+
+        const totalSum = labelTotals.reduce((acc, item) => acc + item.value, 0);
+
+        html += `
+            <div class="mt-2 bg-gradient-to-r from-blue-50/40 to-indigo-50/20 p-2.5 rounded-xl border border-blue-100/40 text-[11px] text-slate-700 flex flex-col gap-1.5">
+                <div class="font-bold text-[#00508F] flex items-center gap-1.5">
+                    <span>📊</span>
+                    <span>สรุปปริมาณสะสมทั้งหมด (Total Accumulated):</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <div class="flex justify-between items-center bg-white/60 px-2 py-1.5 rounded-lg border border-slate-100/40">
+                        <span class="text-slate-500">ผลรวมสะสม:</span>
+                        <span class="font-bold text-slate-800">${formatVal(totalSum)}</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-white/60 px-2 py-1.5 rounded-lg border border-slate-100/40">
+                        <span class="text-slate-500">สูงสุด:</span>
+                        <span class="font-bold text-emerald-600">${maxTotal.label} (${formatVal(maxTotal.value)})</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-white/60 px-2 py-1.5 rounded-lg border border-slate-100/40">
+                        <span class="text-slate-500">ต่ำสุด:</span>
+                        <span class="font-bold text-amber-600">${minTotal.label} (${formatVal(minTotal.value)})</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    html += `</div>`;
+    return html;
+}
+
+/**
  * 🔎 ฟังก์ชันขยายขนาดกราฟสำหรับผู้สูงอายุ (Chart Accessibility Zoom Modal)
  * ทำการดึงโครงสร้างกราฟเดิมมาเรนเดอร์ใหม่ในขนาดใหญ่พิเศษ พร้อมขยายตัวอักษรและข้อมูลบอกค่าคะแนนให้อ่านง่ายขึ้น
  */
@@ -68,12 +362,14 @@ export function zoomChart(canvasId) {
     const card = document.getElementById(canvasId).closest('.glass-card');
     const title = card ? (card.querySelector('h3')?.textContent || 'ขยายการแสดงผลกราฟ') : 'ขยายการแสดงผลกราฟ';
     
+    const summaryHtml = generateChartSummaryHtml(originalChart, title);
+    
     const modalContentHtml = `
-        <div class="h-[60vh] min-h-[400px] w-full bg-white rounded-2xl p-4">
+        <div class="h-[52vh] min-h-[340px] w-full bg-white rounded-2xl p-4">
             <canvas id="zoomChartCanvas"></canvas>
         </div>
-        <div class="mt-4 flex justify-between items-center text-[13px] font-bold text-[#00508F] bg-blue-50/50 p-3.5 rounded-2xl border border-blue-100/60 shadow-sm animate-fade-in-up">
-            <span class="flex items-center gap-2">👵👴 <span><strong>โหมดช่วยการมองเห็นสำหรับผู้สูงอายุ:</strong> กราฟนี้ถูกขยายพร้อมขยายขนาดฟอนต์ของข้อความและค่าคะแนนเพื่อให้ท่านอ่านได้อย่างสะดวก</span></span>
+        <div class="mt-4 bg-slate-50/70 p-4 rounded-2xl border border-slate-100 shadow-sm animate-fade-in-up leading-relaxed">
+            ${summaryHtml}
         </div>
     `;
     
@@ -85,7 +381,7 @@ export function zoomChart(canvasId) {
         }
     };
     
-    showSharedGlassModal(title, 'แสดงผลกราฟขนาดใหญ่พิเศษเพื่อผู้สูงอายุและการมองเห็นที่ชัดเจน', modalContentHtml, 'xl', onClose);
+    showSharedGlassModal(title, 'แสดงผลกราฟขนาดใหญ่พร้อมสรุปข้อมูลสถิติ', modalContentHtml, 'xl', onClose);
     
     const zoomCtx = document.getElementById('zoomChartCanvas');
     if (!zoomCtx) return;

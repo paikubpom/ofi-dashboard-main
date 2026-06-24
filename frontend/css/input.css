@@ -82,3 +82,26 @@
     position: absolute;
     width: 100%;
 }
+
+/* 🌟 Active highlight state for selected table rows matching corporate theme */
+.active-selected-row {
+    background-color: rgba(239, 246, 255, 0.9) !important; /* bg-blue-50/90 */
+    border-left: 4px solid #00508F !important;
+}
+
+/* Enhance text colors of all cells in the highlighted row for maximum legibility */
+.active-selected-row td {
+    color: #003D70 !important; /* Darker corporate blue */
+    font-weight: 600 !important;
+}
+
+/* Ensure IDs and scores retain high-contrast dark styles */
+.active-selected-row td.font-mono {
+    color: #00223E !important;
+    font-weight: 700 !important;
+}
+
+/* Maintain proper contrast for the element module tag */
+.active-selected-row td:nth-child(2) {
+    color: #00508F !important;
+}

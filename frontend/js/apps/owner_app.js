@@ -40,7 +40,7 @@ class OwnerApp {
         this.clear();
         try {
             const res = await fetch(`${this.API_BASE_URL}/api/dashboard-data?t=${Date.now()}`, { 
-                headers: { 'Authorization': `Bearer owner:${this.ownerKey}` } 
+                headers: { 'Authorization': `Bearer owner:${encodeURIComponent(this.ownerKey)}` } 
             });
             if (!res.ok) throw new Error(`HTTP Error Status: ${res.status}`);
             const result = await res.json();

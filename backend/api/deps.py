@@ -1,3 +1,4 @@
+import urllib.parse
 from fastapi import Header, HTTPException
 from typing import Generator, Tuple, Optional
 from sqlalchemy.orm import Session
@@ -24,7 +25,9 @@ def get_current_role(authorization: str = Header(None)) -> Tuple[str, Optional[s
         role_type = token
     elif token.startswith("owner:"):
         role_type = "owner"
-        owner_id = token.split(":")[1]
+        # Decode client percent-encoded UTF-8 strings (e.g. Thai name IDs)
+        raw_owner = token.split(":")[1]
+        owner_id = urllib.parse.unquote(raw_owner)
     else:
         raise HTTPException(status_code=403, detail="Forbidden")
         

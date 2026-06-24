@@ -520,7 +520,7 @@ class AdminApp {
                         <div class="flex justify-between items-center mb-2">
                             <h4 class="text-[12px] font-bold text-slate-700 group-hover:text-[#00508F] transition-colors">${data.title}</h4>
                             <button class="btn-expand-chart p-0.5 text-slate-400 hover:text-blue-600 rounded transition" data-canvas-id="canvas-preview-${chartId}" title="ขยายกราฟ (Zoom Chart)">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4m12 4V4h-4M4 16v4h4m12-4v4h-4" /></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4m12 4V4h-4M4 16v4h4m12-4v4h-4" /></svg>
                             </button>
                         </div>
                         <div class="h-[120px] w-full bg-slate-50/70 rounded-2xl p-2 mb-4 flex items-center justify-center overflow-hidden border border-slate-100 shadow-inner">

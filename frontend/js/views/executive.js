@@ -142,7 +142,6 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
                 <table class="w-full text-left border-collapse text-xs sm:text-[13px] table-auto">
                     <thead>
                         <tr class="text-slate-500 font-bold border-b border-slate-200/60 bg-slate-50/50 text-[11px] uppercase tracking-wider">
-                            <th class="py-3 px-3 w-[10%] min-w-[100px] text-center whitespace-nowrap">ID</th>
                             <th class="py-3 px-3 w-[8%] min-w-[70px] text-center whitespace-nowrap">หมวด</th>
                             <th class="py-3 px-3 w-[28%] min-w-[200px] whitespace-nowrap">หัวข้อการประเมิน (Topic)</th>
                             <th class="py-3 px-3 w-[28%] min-w-[200px] whitespace-nowrap">รายละเอียด OFI (OFI Title)</th>
@@ -181,7 +180,7 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
                     <div class="flex justify-between items-center mb-3">
                         <h3 class="text-sm font-bold text-slate-800">${chartSettings["chart-yearly-comparison"]?.title || '2.1 เปรียบเทียบคะแนนภาพรวมรายปี'}</h3>
                         <button class="btn-expand-chart p-1 text-slate-400 hover:text-blue-600 hover:bg-slate-50 rounded-lg transition" data-chart-id="chart-yearly-comparison" title="ขยายกราฟ (Zoom Chart)">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4m12 4V4h-4M4 16v4h4m12-4v4h-4" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4m12 4V4h-4M4 16v4h4m12-4v4h-4" /></svg>
                         </button>
                     </div>
                     <div class="h-[300px]"><canvas id="yearlyComparisonChartCanvas"></canvas></div>
@@ -193,7 +192,7 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
                     <div class="flex justify-between items-center mb-3">
                         <h3 class="text-sm font-bold text-slate-800">${chartSettings["chart-ofi-level"]?.title || '2.4 ระดับความยาก (OFI Level)'}</h3>
                         <button class="btn-expand-chart p-1 text-slate-400 hover:text-blue-600 hover:bg-slate-50 rounded-lg transition" data-chart-id="chart-ofi-level" title="ขยายกราฟ (Zoom Chart)">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4m12 4V4h-4M4 16v4h4m12-4v4h-4" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4m12 4V4h-4M4 16v4h4m12-4v4h-4" /></svg>
                         </button>
                     </div>
                     <div class="h-[300px]"><canvas id="ofiLevelChartCanvas"></canvas></div>
@@ -205,7 +204,7 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
                     <div class="flex justify-between items-center mb-3">
                         <h3 class="text-sm font-bold text-slate-800">${chartSettings["chart-6year-trend"]?.title || '2.2 แนวโน้มคะแนนเฉลี่ย 6 ปี'}</h3>
                         <button class="btn-expand-chart p-1 text-slate-400 hover:text-blue-600 hover:bg-slate-50 rounded-lg transition" data-chart-id="chart-6year-trend" title="ขยายกราฟ (Zoom Chart)">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4m12 4V4h-4M4 16v4h4m12-4v4h-4" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4m12 4V4h-4M4 16v4h4m12-4v4h-4" /></svg>
                         </button>
                     </div>
                     <div class="h-[300px]"><canvas id="trendChartCanvas"></canvas></div>
@@ -217,7 +216,7 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
                     <div class="flex justify-between items-center mb-3">
                         <h3 class="text-sm font-bold text-slate-800">${chartSettings["chart-individual-workload"]?.title || '2.3 ปริมาณงานและสถานะรายบุคคล'}</h3>
                         <button class="btn-expand-chart p-1 text-slate-400 hover:text-blue-600 hover:bg-slate-50 rounded-lg transition" data-chart-id="chart-individual-workload" title="ขยายกราฟ (Zoom Chart)">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4m12 4V4h-4M4 16v4h4m12-4v4h-4" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4m12 4V4h-4M4 16v4h4m12-4v4h-4" /></svg>
                         </button>
                     </div>
                     <div class="h-[300px]"><canvas id="workloadChartCanvas"></canvas></div>
@@ -491,7 +490,6 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
 
             return `
                 <tr class="hover:bg-blue-50/40 transition-colors group cursor-pointer animate-row-enter" data-id="${rId}">
-                    <td class="py-3.5 px-3 font-mono font-bold text-slate-500 whitespace-nowrap">${rId}</td>
                     <td class="py-3.5 px-3 font-bold text-slate-700 text-center whitespace-nowrap">${rMod}</td>
                     <td class="py-3.5 px-3 text-slate-600 max-w-[240px] lg:max-w-[340px] xl:max-w-[440px] truncate" title="${rTopic}">${rTopic}</td>
                     <td class="py-3.5 px-3 font-semibold text-slate-800 max-w-[260px] lg:max-w-[380px] xl:max-w-[500px] truncate" title="${rTitle}">${rTitle}</td>
@@ -605,6 +603,12 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
         const record = rawRecords.find(r => r.id === id);
         if (!record) return;
 
+        // 🌟 เพิ่มไฮไลท์บรรทัดของข้อมูลที่ถูกเลือก (Row Highlight - ธีมสีน้ำเงินเข้มมองเห็นง่าย)
+        tableBody.querySelectorAll('tr').forEach(r => {
+            r.classList.remove('active-selected-row');
+        });
+        row.classList.add('active-selected-row');
+
         // จัดเตรียมข้อมูลความคืบหน้าเฟสงาน (Gantt timeline)
         const phasesObj = record.phases || {};
         const phasesList = [
@@ -629,7 +633,7 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
             
             return `
                 <div class="p-3 bg-slate-50/80 rounded-2xl border border-slate-100 text-center flex flex-col justify-between h-20">
-                    <span class="block text-[10px] font-bold text-slate-500">${p.label}</span>
+                    <span class="block text-[10px] font-extrabold text-slate-700">${p.label}</span>
                     <span class="px-2 py-0.5 rounded-full text-[9px] font-black inline-block mt-2 ${badgeColor}">${phaseStatus}</span>
                 </div>`;
         }).join('');
@@ -643,50 +647,63 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
         const score = getRecordScore(record).toFixed(4);
         const modalContent = `
             <div class="space-y-5 py-2">
-                <div class="p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
-                    <h5 class="text-[11px] font-bold text-blue-500 uppercase tracking-wider mb-1">หัวข้อการประเมิน (Assessment Topic)</h5>
-                    <p class="text-xs font-bold text-slate-700 leading-relaxed">${getRecordTopicName(record)}</p>
+                <div class="p-4 bg-blue-50/70 rounded-2xl border border-blue-100/80">
+                    <h5 class="text-[11px] font-extrabold text-[#00508F] uppercase tracking-wider mb-1">หัวข้อการประเมิน (Assessment Topic)</h5>
+                    <p class="text-xs font-bold text-slate-800 leading-relaxed">${getRecordTopicName(record)}</p>
                 </div>
                 
                 <div>
-                    <h5 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">รายละเอียดข้อเสนอแนะหลัก (OFI Description)</h5>
-                    <p class="text-sm font-semibold text-slate-800 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-100">${getRecordTitle(record)}</p>
+                    <h5 class="text-[11px] font-extrabold text-[#00508F] uppercase tracking-wider mb-2">รายละเอียดข้อเสนอแนะหลัก (OFI Description)</h5>
+                    <p class="text-sm font-semibold text-slate-900 leading-relaxed bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80">${getRecordTitle(record)}</p>
                 </div>
 
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div class="p-3 bg-slate-50 rounded-xl text-center">
-                        <span class="block text-[10px] font-bold text-slate-400 uppercase">ผู้ดูแลแผนงาน</span>
-                        <span class="block text-xs font-bold text-slate-700 mt-1">${getRecordOwnerName(record)}</span>
+                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100">
+                        <span class="block text-[10px] font-extrabold text-slate-600 uppercase">ผู้ดูแลแผนงาน</span>
+                        <span class="block text-xs font-bold text-slate-800 mt-1">${getRecordOwnerName(record)}</span>
                     </div>
-                    <div class="p-3 bg-slate-50 rounded-xl text-center">
-                        <span class="block text-[10px] font-bold text-slate-400 uppercase">คะแนนผลลัพธ์</span>
-                        <span class="block text-xs font-mono font-black text-blue-600 mt-1">${score} / 5.0000</span>
+                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100">
+                        <span class="block text-[10px] font-extrabold text-slate-600 uppercase">คะแนนผลลัพธ์</span>
+                        <span class="block text-xs font-mono font-black text-[#00508F] mt-1">${score} / 5.0000</span>
                     </div>
-                    <div class="p-3 bg-slate-50 rounded-xl text-center">
-                        <span class="block text-[10px] font-bold text-slate-400 uppercase">ระดับความยาก</span>
+                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100">
+                        <span class="block text-[10px] font-extrabold text-slate-600 uppercase">ระดับความยาก</span>
                         <span class="block text-xs font-black text-[#00508F] mt-1">${record.ofiLevel || 'อื่นๆ'}</span>
                     </div>
-                    <div class="p-3 bg-slate-50 rounded-xl text-center">
-                        <span class="block text-[10px] font-bold text-slate-400 uppercase">แหล่งที่มาของปัญหา</span>
-                        <span class="block text-xs font-bold text-slate-600 mt-1">${record.defectSource || '-'}</span>
+                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100">
+                        <span class="block text-[10px] font-extrabold text-slate-600 uppercase">แหล่งที่มาของปัญหา</span>
+                        <span class="block text-xs font-bold text-slate-800 mt-1">${record.defectSource || '-'}</span>
                     </div>
                 </div>
 
                 <div class="space-y-2">
-                    <h5 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">ประเด็นปัญหาสำคัญ (Issue Tags)</h5>
+                    <h5 class="text-[11px] font-extrabold text-[#00508F] uppercase tracking-wider">ประเด็นปัญหาสำคัญ (Issue Tags)</h5>
                     <div class="flex gap-2.5 flex-wrap">${tagsHtml}</div>
                 </div>
 
                 <div class="border-t border-slate-200/50 pt-4">
-                    <h5 class="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                    <h5 class="text-[11px] font-extrabold text-[#00508F] uppercase tracking-wider mb-3 flex items-center gap-1.5">
                         <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
                         สถานะการดำเนินงานรายขั้นตอน (Phase Status Timeline)
                     </h5>
                     <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">${timelineHtml}</div>
                 </div>
+
+                <!-- 💾 ส่วนแสดงไฟล์ Database ต้นทางสำหรับข้อมูลนี้ -->
+                <div class="border-t border-slate-200/50 pt-4 flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <span class="text-[11px] font-extrabold text-[#00508F] uppercase tracking-wider">💾 ไฟล์คลังข้อมูล (Source Database File)</span>
+                    <a href="/static-data/${record._source_file || 'data.json'}" target="_blank" class="px-4 py-2 bg-[#00508F] hover:bg-[#003d70] text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer">
+                        📂 เปิดดูไฟล์: ${record._source_file || 'ไม่มีไฟล์'}
+                    </a>
+                </div>
             </div>`;
 
-        showSharedGlassModal(`รายละเอียดแผนงาน OFI: ${id}`, `จากแหล่งข้อมูล: ${record._source_file || 'คลังข้อมูลกลาง'}`, modalContent);
+        // คืนค่าไฮไลท์กลับสู่สภาพเดิมเมื่อโมดอลถูกปิด
+        const onClose = () => {
+            row.classList.remove('active-selected-row');
+        };
+
+        showSharedGlassModal(`รายละเอียดแผนงาน OFI: ${id}`, `จากแหล่งข้อมูล: ${record._source_file || 'คลังข้อมูลกลาง'}`, modalContent, 'md', onClose);
     });
 
     // --- ระบบ Click เพื่อขยายขนาดกราฟ (Accessibility Zoom) ---

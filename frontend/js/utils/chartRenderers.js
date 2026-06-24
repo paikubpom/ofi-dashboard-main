@@ -412,18 +412,18 @@ export function renderGanttGrid(containerId, tasks) {
     
     const container = document.getElementById(containerId);
     if (!container) return;
-
+ 
     // เนรมิตโครงสร้าง HTML Table ให้สัดส่วนและสีตรงตามปกหน้าจอของบอสเป๊ะๆ
     let html = `
         <table class="w-full text-left border-collapse text-[11px] mt-2">
             <thead>
                 <tr class="text-slate-400 font-bold uppercase border-b border-slate-100">
-                    <th class="py-2">TASK ID</th>
-                    <th class="py-2">PLAN</th>
-                    <th class="py-2">BO/EC</th>
-                    <th class="py-2">ASSESS</th>
-                    <th class="py-2">DOC</th>
-                    <th class="py-2">SITE</th>
+                    <th class="py-2 w-[40%]">หัวข้อการประเมิน (Assessment Topic)</th>
+                    <th class="py-2 text-center w-[12%]">PLAN</th>
+                    <th class="py-2 text-center w-[12%]">BO/EC</th>
+                    <th class="py-2 text-center w-[12%]">ASSESS</th>
+                    <th class="py-2 text-center w-[12%]">DOC</th>
+                    <th class="py-2 text-center w-[12%]">SITE</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 font-semibold text-slate-700">
@@ -431,13 +431,13 @@ export function renderGanttGrid(containerId, tasks) {
 
     tasks.forEach(task => {
         html += `
-            <tr class="align-middle">
-                <td class="py-3 font-bold text-slate-800">${task.id}</td>
-                <td class="py-3">${renderGanttBlock(task.plan)}</td>
-                <td class="py-3">${renderGanttBlock(task.boec)}</td>
-                <td class="py-3">${renderGanttBlock(task.assess)}</td>
-                <td class="py-3">${renderGanttBlock(task.doc)}</td>
-                <td class="py-3">${renderGanttBlock(task.site)}</td>
+            <tr class="align-middle border-b border-slate-50">
+                <td class="py-3 font-bold text-slate-800 pr-2 truncate max-w-[200px]" title="${task.id}">${task.id}</td>
+                <td class="py-3 text-center">${renderGanttBlock(task.plan)}</td>
+                <td class="py-3 text-center">${renderGanttBlock(task.boec)}</td>
+                <td class="py-3 text-center">${renderGanttBlock(task.assess)}</td>
+                <td class="py-3 text-center">${renderGanttBlock(task.doc)}</td>
+                <td class="py-3 text-center">${renderGanttBlock(task.site)}</td>
             </tr>
         `;
     });
@@ -448,9 +448,10 @@ export function renderGanttGrid(containerId, tasks) {
 
 // ฟังก์ชันย่อยช่วยพ่นบล็อกสีสถานะใน Gantt
 function renderGanttBlock(status) {
-    if (status === 'green') return `<div class="w-16 h-6 bg-[#10B981] rounded"></div>`;
-    if (status === 'yellow') return `<div class="w-16 h-6 bg-[#F59E0B] rounded"></div>`;
-    return `<div class="w-16 h-6 bg-[#E2E8F0] rounded"></div>`; // สีเทาไม่ได้เปิดใช้งาน
+    if (status === 'green') return `<div class="w-14 h-5 bg-[#10B981] rounded-md shadow-sm mx-auto"></div>`;
+    if (status === 'yellow') return `<div class="w-14 h-5 bg-[#F59E0B] rounded-md shadow-sm mx-auto"></div>`;
+    if (status === 'red') return `<div class="w-14 h-5 bg-[#EF4444] rounded-md shadow-sm mx-auto"></div>`;
+    return `<div class="w-14 h-5 bg-[#E2E8F0] rounded-md shadow-sm mx-auto"></div>`;
 }
 
 /**

@@ -18,8 +18,8 @@ class OFIRepository:
         try:
             placeholders = ",".join(["?"] * len(allowed_files))
             if owner_id:
-                query = f"SELECT * FROM published_data WHERE _source_file IN ({placeholders}) AND elementOwnerId = ?"
-                df = pd.read_sql_query(query, conn, params=allowed_files + [owner_id])
+                query = f"SELECT * FROM published_data WHERE _source_file IN ({placeholders}) AND (elementOwnerId = ? OR INSTR(elementOwnerId, ?))"
+                df = pd.read_sql_query(query, conn, params=allowed_files + [owner_id, owner_id])
             else:
                 query = f"SELECT * FROM published_data WHERE _source_file IN ({placeholders})"
                 df = pd.read_sql_query(query, conn, params=allowed_files)

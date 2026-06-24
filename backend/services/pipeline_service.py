@@ -29,7 +29,16 @@ class DataPipelineService:
         """Verify the headers of the uploaded file (read first row to save RAM)."""
         try:
             if file_path.endswith(('.xlsx', '.xls')):
-                df_header = pd.read_excel(file_path, nrows=0)
+                xls = pd.ExcelFile(file_path)
+                import re
+                selected_sheet = None
+                for sheet in xls.sheet_names:
+                    if re.search(r"OFI Improvement Plan", sheet, re.IGNORECASE):
+                        selected_sheet = sheet
+                        break
+                if not selected_sheet:
+                    return False, "ไม่พบชีตที่ตรงตามเงื่อนไข (ต้องการชีตที่มีคำว่า 'OFI Improvement Plan')"
+                df_header = pd.read_excel(file_path, sheet_name=selected_sheet, nrows=0)
             elif file_path.endswith('.csv'):
                 df_header = pd.read_csv(file_path, nrows=0)
             else:
@@ -237,15 +246,17 @@ class DataPipelineService:
                 try:
                     xls = pd.ExcelFile(file_path)
                     sheet_names = xls.sheet_names
-                    selected_sheet = sheet_names[0]
                     
-                    # Search for the correct planning sheet
+                    import re
+                    selected_sheet = None
                     for sheet in sheet_names:
-                        lower_sheet = sheet.lower()
-                        if 'plan' in lower_sheet or 'ofi' in lower_sheet or 'improvement' in lower_sheet:
-                            if 'back up' not in lower_sheet and 'backup' not in lower_sheet and 'อธิบาย' not in lower_sheet:
-                                selected_sheet = sheet
-                                break
+                        if re.search(r"OFI Improvement Plan", sheet, re.IGNORECASE):
+                            selected_sheet = sheet
+                            break
+                    
+                    if not selected_sheet:
+                        print(f"[Excel Loader] Skipping file '{file_name}' as it lacks a sheet matching regex 'OFI Improvement Plan'")
+                        continue
                     
                     print(f"[Excel Loader] Loading sheet '{selected_sheet}' from file '{file_name}'")
                     df = pd.read_excel(file_path, sheet_name=selected_sheet)
