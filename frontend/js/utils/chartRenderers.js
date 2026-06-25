@@ -420,7 +420,7 @@ export function renderGanttGrid(containerId, tasks) {
                 <tr class="text-slate-400 font-bold uppercase border-b border-slate-100">
                     <th class="py-2 w-[40%]">หัวข้อการประเมิน (Assessment Topic)</th>
                     <th class="py-2 text-center w-[12%]">PLAN</th>
-                    <th class="py-2 text-center w-[12%]">BO/EC</th>
+                    <th class="py-2 text-center w-[12%]">EO/EC</th>
                     <th class="py-2 text-center w-[12%]">ASSESS</th>
                     <th class="py-2 text-center w-[12%]">DOC</th>
                     <th class="py-2 text-center w-[12%]">SITE</th>
