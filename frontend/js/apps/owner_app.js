@@ -54,9 +54,13 @@ class OwnerApp {
                 ? new Date(result.last_sync * 1000).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) + ' น.'
                 : 'ยังไม่ได้ซิงก์ข้อมูล';
 
+            const ownerObj = this.data.owners.find(o => o.id === this.ownerKey);
+            const ownerNameThai = ownerObj ? ownerObj.nameThai : '';
+            const headerTitle = ownerNameThai ? `⚙️ Process Owner Dashboard (${ownerNameThai})` : '⚙️ Process Owner Dashboard';
+
             const headerEl = document.getElementById('global-header');
             if (headerEl) {
-                headerEl.innerHTML = getSharedHeaderHtml('⚙️ Process Owner Dashboard', 'bg-blue-600', false, '', syncTimeStr);
+                headerEl.innerHTML = getSharedHeaderHtml(headerTitle, 'bg-blue-600', false, '', syncTimeStr);
             }
             
             const flags = this.data.detectRedFlags(this.API_BASE_URL);

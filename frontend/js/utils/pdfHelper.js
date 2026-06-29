@@ -34,6 +34,8 @@ export function initGlobalPdfExport(roleName) {
         `;
 
         const wrapper = document.createElement('div');
+        wrapper.id = 'download-pdf-btn-wrapper';
+        wrapper.className = 'no-export';
         wrapper.style.position = 'relative';
         wrapper.style.display = 'inline-flex';
         wrapper.appendChild(btn);
@@ -92,9 +94,16 @@ export function initGlobalPdfExport(roleName) {
                     ? `/api/export-pdf/${roleName.toLowerCase()}?nocache=true` 
                     : `/api/export-jpg/${roleName.toLowerCase()}?nocache=true`;
 
+                let authHeader = `Bearer ${roleName.toLowerCase()}`;
+                if (roleName.toLowerCase() === 'owner') {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const ownerKey = urlParams.get('owner') || 'owner-pakorn';
+                    authHeader = `Bearer owner:${encodeURIComponent(ownerKey)}`;
+                }
+
                 const response = await fetch(endpoint, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${roleName.toLowerCase()}`, 'Content-Type': 'application/json' },
+                    headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         local_state: localState, 
                         session_state: sessionState, 

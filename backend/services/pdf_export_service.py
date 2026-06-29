@@ -84,6 +84,11 @@ class PDFExportService:
             raise ValueError("Browser is not initialized.")
             
         url = self.base_url + ROLE_PATHS[role]
+        if role == "owner" and token and token.startswith("owner:"):
+            import urllib.parse
+            owner_id = token.split(":")[1]
+            url += f"?owner={urllib.parse.quote(owner_id)}"
+
 
         context = await self.browser.new_context(
             viewport={"width": viewport_width, "height": 900},
@@ -168,7 +173,7 @@ class PDFExportService:
             # Hide components that shouldn't show in PDF/export
             await page.evaluate("""
                 () => {
-                    ['#download-pdf-btn', '[data-hide-on-export]', '.no-export'].forEach(sel => {
+                    ['#download-pdf-btn', '#download-pdf-btn-wrapper', '[data-hide-on-export]', '.no-export'].forEach(sel => {
                         document.querySelectorAll(sel).forEach(el => { 
                             if(el) el.style.display = 'none';
                         });
