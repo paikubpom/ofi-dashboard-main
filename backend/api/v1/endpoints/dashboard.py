@@ -66,6 +66,7 @@ async def get_secure_dashboard_data(current_role_info: Tuple[str, Optional[str]]
         db_response["topicScoreMaster"] = master_metadata["topicScoreMaster"]
 
     db_response["ofiImprovements"] = secured_ofis
+    db_response["projects"] = ofi_repo.get_executive_projects()
     config = settings_repository.get_system_config()
 
     return {
@@ -75,6 +76,7 @@ async def get_secure_dashboard_data(current_role_info: Tuple[str, Optional[str]]
         "last_sync": config.get("last_sync"),
         "data": db_response
     }
+
 
 @router.get("/active-owners", response_model=ActiveOwnersResponse)
 async def get_active_owners():

@@ -14,7 +14,6 @@
             color: #334155;
             min-height: 100vh;
             position: relative;
-            overflow-x: hidden;
         }
         /* Liquid Background morphing blobs */
         .bg-blob-1 {
@@ -105,7 +104,7 @@
         <div class="bg-blob-4"></div>
     </div>
  
-    <div class="max-w-[95%] lg:max-w-[92%] 2xl:max-w-[90%] mx-auto p-4 sm:p-6 lg:p-8">
+    <div class="max-w-[95%] lg:max-w-[92%] 2xl:max-w-[90%] mx-auto pt-4 sm:pt-6 lg:pt-8 px-4 sm:px-6 lg:px-8 pb-2">
         <div id="global-header" class="mb-6"></div>
 
         <!-- <div class="inline-flex p-1.5 bg-slate-200/50 backdrop-blur-md rounded-2xl mb-8 border border-white/60 shadow-inner">
@@ -120,11 +119,14 @@
         </div> -->
 
         <div id="section-file-system" class="grid grid-cols-1 lg:grid-cols-3 gap-8 transition-opacity duration-500">
-            <div class="glass-card p-7 rounded-3xl lg:col-span-2">
-                <div class="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
-                    <h3 class="text-base font-bold text-slate-800 tracking-wide">รายการไฟล์ในระบบฐานข้อมูล</h3>
-                    <div class="flex items-center gap-4">
-                        <span id="last-sync-time" class="text-[11px] text-slate-400">กำลังโหลดข้อมูล...</span>
+            <div class="glass-card rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden lg:col-span-2 bg-white/50">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-6 pb-4 border-b border-slate-100">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800 tracking-wide">รายการไฟล์ในระบบฐานข้อมูล</h3>
+                        <div id="last-sync-time" class="text-[11px] text-slate-400 mt-1">กำลังโหลดข้อมูล...</div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <span id="last-sync-time" class="hidden text-[11px] text-slate-400">กำลังโหลดข้อมูล...</span>
                         
                         <label class="flex items-center gap-2 text-xs font-bold text-slate-500 cursor-pointer hover:text-slate-700 transition select-none">
                             <div class="relative inline-flex items-center cursor-pointer">
@@ -144,23 +146,23 @@
                 </div>
                 
                 <div class="overflow-x-auto min-h-[220px]">
-                    <table class="w-full text-left border-collapse text-[13px]">
+                    <table class="w-full text-left border-collapse text-xs sm:text-[13px] table-auto">
                         <thead>
-                            <tr class="text-slate-400 font-semibold border-b border-slate-100">
-                                <th class="py-3 px-4 w-12 text-center">
+                            <tr class="bg-slate-800 text-white font-bold text-[11px] uppercase tracking-wider divide-x divide-white/10">
+                                <th class="py-3.5 px-4 w-12 text-center">
                                     <input type="checkbox" id="select-all-files" class="w-4 h-4 text-blue-600 rounded border-slate-300 cursor-pointer focus:ring-0">
                                 </th>
-                                <th class="py-3 px-4 w-20">สถานะ</th>
-                                <th class="py-3 px-4">ชื่อไฟล์อ้างอิง</th>
-                                <th class="py-3 px-4">วันที่นำเข้า</th>
-                                <th class="py-3 px-4">แก้ไขล่าสุด</th>
-                                <th class="py-3 px-4 text-right w-24">จัดการ</th>
+                                <th class="py-3.5 px-4 w-24 text-center">สถานะ</th>
+                                <th class="py-3.5 px-4">ชื่อไฟล์อ้างอิง</th>
+                                <th class="py-3.5 px-4">วันที่นำเข้า</th>
+                                <th class="py-3.5 px-4">แก้ไขล่าสุด</th>
+                                <th class="py-3.5 px-4 text-right w-24">จัดการ</th>
                             </tr>
                         </thead>
-                        <tbody id="file-list-body" class="divide-y divide-slate-50/80"></tbody>
+                        <tbody id="file-list-body" class="divide-y divide-slate-200/60 bg-white/50"></tbody>
                     </table>
                 </div>
-                <div id="pagination-controls" class="mt-4 border-t border-slate-100 pt-4 pb-2"></div>
+                <div id="pagination-controls" class="p-4 bg-slate-50/50 border-t border-slate-200/60"></div>
             </div>
 
             <div class="space-y-6">

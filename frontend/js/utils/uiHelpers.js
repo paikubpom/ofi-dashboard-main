@@ -689,3 +689,294 @@ export function showSharedGlassConfirm(title, message) {
         overlay.addEventListener('click', (e) => { if (e.target === overlay) handleAction(false); });
     });
 }
+
+/**
+ * 🚀 ฟังก์ชันเริ่มใช้งาน Sidebar นำทางอัจฉริยะ (Shared Navigation Sidebar)
+ * จัดกลุ่มนำทางและแยกสิทธิ์ของแต่ละหน้า Executive, Auditor, Owner, Admin
+ */
+export async function initSidebar(currentRole, activeOwnerKey = '') {
+    if (document.getElementById('sidebar-container')) return;
+
+    const sidebar = document.createElement('aside');
+    sidebar.id = 'sidebar-container';
+    sidebar.className = 'sidebar-glass text-white shrink-0 flex flex-col justify-between h-screen fixed lg:sticky top-0 z-[9999]';
+
+    const getActiveCls = (role) => currentRole.toLowerCase() === role.toLowerCase() 
+        ? 'bg-blue-600/35 border-l-4 border-blue-500 font-extrabold text-blue-200' 
+        : 'hover:bg-white/5 text-slate-300 font-medium';
+
+    let ownersHtml = '<div class="pl-4 text-xs text-slate-500">กำลังโหลด...</div>';
+    try {
+        const res = await fetch('/api/owners');
+        if (res.ok) {
+            const result = await res.json();
+            const owners = result.data || [];
+            ownersHtml = owners.map(o => {
+                const isActive = (currentRole.toLowerCase() === 'owner' && activeOwnerKey === o.id);
+                const itemCls = isActive 
+                    ? 'text-blue-300 font-extrabold bg-blue-600/10' 
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5';
+                return `
+                    <a href="owner.html?owner=${encodeURIComponent(o.id)}" class="flex items-center gap-2 px-4 py-2 text-xs rounded-xl transition-all ${itemCls}">
+                        <span class="text-[9px]">👤</span>
+                        <span class="truncate">${o.nameThai || o.id}</span>
+                    </a>
+                `;
+            }).join('');
+        }
+    } catch (e) {
+        console.warn("Failed to load owners in sidebar", e);
+        ownersHtml = '<div class="pl-4 text-xs text-rose-400">โหลดข้อมูลไม่สำเร็จ</div>';
+    }
+
+    sidebar.innerHTML = `
+        <div class="sidebar-inner flex flex-col justify-between h-full w-64 overflow-y-auto">
+            <div class="p-6">
+                <div class="flex items-center gap-3 mb-8 pb-4 border-b border-white/10">
+                    <span class="text-2xl animate-pulse">🚀</span>
+                    <div>
+                        <h3 class="text-sm font-black tracking-wider text-slate-100 uppercase">PTT OFI SYSTEM</h3>
+                        <p class="text-[9px] text-slate-400 font-extrabold tracking-widest mt-0.5">ULTIMATE INTEGRATION</p>
+                    </div>
+                </div>
+
+                <nav class="space-y-2">
+                    <a href="executive.html" class="flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${getActiveCls('executive')}">
+                        <span class="text-lg">👑</span>
+                        <span class="text-xs">ผู้บริหาร (Executive View)</span>
+                    </a>
+
+                    <a href="auditor.html" class="flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${getActiveCls('auditor')}">
+                        <span class="text-lg">🔍</span>
+                        <span class="text-xs">ผู้ตรวจสอบ (Auditor View)</span>
+                    </a>
+
+                    <div class="space-y-1">
+                        <button id="sidebar-owner-btn" class="w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all hover:bg-white/5 text-slate-300 font-medium ${currentRole.toLowerCase() === 'owner' ? 'bg-white/5' : ''}">
+                            <span class="flex items-center gap-3">
+                                <span class="text-lg">⚙️</span>
+                                <span class="text-xs">เจ้าของงาน (Process Owner)</span>
+                            </span>
+                            <span class="text-[10px] transition-transform duration-200 ${currentRole.toLowerCase() === 'owner' ? 'rotate-180' : ''}" id="sidebar-owner-arrow">▼</span>
+                        </button>
+                        <div id="sidebar-owner-list" class="pl-4 space-y-1 mt-1 transition-all ${currentRole.toLowerCase() === 'owner' ? '' : 'hidden'}">
+                            ${ownersHtml}
+                        </div>
+                    </div>
+
+                    <a href="admin.html" class="flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${getActiveCls('admin')}">
+                        <span class="text-lg">🛡️</span>
+                        <span class="text-xs">ผู้ดูแลระบบ (Admin Panel)</span>
+                    </a>
+                </nav>
+            </div>
+
+            <div class="p-6 border-t border-white/10">
+                <a href="index.html" class="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700/80 text-slate-200 hover:text-white text-xs font-bold rounded-xl transition-all shadow-md">
+                    <span>🚪</span> กลับหน้าหลัก (Portal)
+                </a>
+            </div>
+        </div>
+
+        <button id="sidebar-toggle-handle" class="absolute z-[10000] p-2.5 rounded-xl border transition-all duration-300 active:scale-95 flex items-center justify-center" title="ซ่อน/แสดง Sidebar">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 icon-hamburger" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 icon-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+            </svg>
+        </button>
+    `;
+
+    // 🛠️ แก้ไขที่ 1: ค้นหา mainContainer ที่แท้จริง โดยข้ามกล่อง Background Liquid
+    const allDivs = document.querySelectorAll('body > div');
+    let mainContainer = Array.from(allDivs).find(el => !el.classList.contains('pointer-events-none') && !el.classList.contains('fixed'));
+    
+    // สำรองในกรณีหาไม่เจอ ให้ดึงตัวสุดท้ายมาใช้
+    if (!mainContainer && allDivs.length > 0) {
+        mainContainer = allDivs[allDivs.length - 1];
+    }
+
+    if (mainContainer) {
+        const body = document.body;
+        body.className = 'text-slate-800 bg-[#f1f5f9] flex min-h-screen';
+
+        // Load side state (collapse/expand)
+        const isMobile = window.innerWidth < 1024;
+        const localCollapsed = localStorage.getItem('sidebar-collapsed');
+        const shouldCollapse = localCollapsed !== null 
+            ? localCollapsed === 'true' 
+            : isMobile;
+
+        if (shouldCollapse) {
+            body.classList.add('sidebar-collapsed');
+        } else {
+            body.classList.remove('sidebar-collapsed');
+        }
+
+        if (!document.getElementById('sidebar-styles')) {
+            const style = document.createElement('style');
+            style.id = 'sidebar-styles';
+            style.textContent = `
+                .sidebar-glass {
+                    background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%);
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
+                    border-right: 1px solid rgba(255, 255, 255, 0.08);
+                }
+                #sidebar-container {
+                    width: 16rem;
+                    height: 100vh;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    z-index: 9999;
+                    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    overflow: visible;
+                }
+                .sidebar-collapsed #sidebar-container {
+                    width: 0px !important;
+                    min-width: 0px !important;
+                    border-right: none !important;
+                }
+                #sidebar-container .sidebar-inner {
+                    width: 16rem;
+                    height: 100%;
+                    transition: opacity 0.2s ease-in-out;
+                }
+                .sidebar-collapsed #sidebar-container .sidebar-inner {
+                    position: absolute;
+                    opacity: 0;
+                    pointer-events: none;
+                }
+                #sidebar-toggle-handle {
+                    position: absolute;
+                    top: 1.25rem;
+                    right: 1rem;
+                    background-color: rgba(30, 41, 59, 0.8);
+                    border-color: rgba(255, 255, 255, 0.1);
+                    color: #cbd5e1;
+                    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1), left 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s, border-color 0.3s, color 0.3s;
+                }
+                #sidebar-toggle-handle:hover {
+                    background-color: rgba(51, 65, 85, 0.9);
+                    color: #ffffff;
+                }
+                #sidebar-toggle-handle .icon-hamburger {
+                    display: none;
+                }
+                #sidebar-toggle-handle .icon-arrow {
+                    display: block;
+                }
+
+                .sidebar-collapsed #sidebar-toggle-handle {
+                    right: auto !important;
+                    left: 100% !important;
+                    margin-left: 12px !important;
+                    background-color: #ffffff !important;
+                    border-color: #e2e8f0 !important;
+                    color: #475569 !important;
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                }
+                .sidebar-collapsed #sidebar-toggle-handle:hover {
+                    background-color: #f8fafc !important;
+                    color: #0f172a !important;
+                }
+                .sidebar-collapsed #sidebar-toggle-handle .icon-hamburger {
+                    display: block;
+                }
+                .sidebar-collapsed #sidebar-toggle-handle .icon-arrow {
+                    display: none;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // แทรก Sidebar เข้าไปใน Container จริง
+        mainContainer.prepend(sidebar);
+        
+        // 🛠️ แก้ไขที่ 2: ล้างคลาส % ออก บังคับให้พื้นที่ทำงานเต็มจอตลอดเวลา
+        mainContainer.className = 'w-full min-h-screen py-4 md:py-6 relative flex flex-col';
+
+        // 🛠️ แก้ไขที่ 3: ห่อเนื้อหาในกล่องขนาด 1344px เท่า Grid เป๊ะๆ
+        let wrapper = mainContainer.querySelector('.main-grid-wrapper');
+        if (!wrapper) {
+            wrapper = document.createElement('div');
+            wrapper.className = 'main-grid-wrapper w-full mx-auto px-4 xl:px-0 space-y-6';
+            wrapper.style.maxWidth = '1344px'; // ใช้ style กัน Tailwind Purge
+            
+            const childNodes = Array.from(mainContainer.childNodes);
+            childNodes.forEach(child => {
+                if (child !== sidebar && child !== wrapper) {
+                    wrapper.appendChild(child);
+                }
+            });
+            mainContainer.appendChild(wrapper);
+        } else {
+            wrapper.className = 'main-grid-wrapper w-full mx-auto px-4 xl:px-0 space-y-6';
+            wrapper.style.maxWidth = '1344px';
+        }
+
+        const ownerBtn = sidebar.querySelector('#sidebar-owner-btn');
+        const ownerList = sidebar.querySelector('#sidebar-owner-list');
+        const ownerArrow = sidebar.querySelector('#sidebar-owner-arrow');
+        if (ownerBtn && ownerList && ownerArrow) {
+            ownerBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                ownerList.classList.toggle('hidden');
+                ownerArrow.classList.toggle('rotate-180');
+            });
+        }
+
+        const toggleBtn = sidebar.querySelector('#sidebar-toggle-handle');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                body.classList.toggle('sidebar-collapsed');
+                localStorage.setItem('sidebar-collapsed', body.classList.contains('sidebar-collapsed'));
+            });
+        }
+
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth < 1024) {
+                if (!sidebar.contains(e.target) && !e.target.closest('#sidebar-toggle-handle')) {
+                    body.classList.add('sidebar-collapsed');
+                }
+            }
+        });
+
+        // 📐 สร้าง Grid สีแดงสำหรับตรวจสอบการจัดวางหน้าจอ (UX/UI Red Grid Overlay Helper)
+        if (!document.getElementById('ux-grid-overlay')) {
+            const gridOverlay = document.createElement('div');
+            gridOverlay.id = 'ux-grid-overlay';
+            
+            gridOverlay.className = 'pointer-events-none absolute inset-0 z-[50] hidden w-full overflow-hidden flex justify-center';
+            gridOverlay.innerHTML = `
+                <div class="h-full w-full grid grid-cols-12 gap-6 px-4 xl:px-0" style="max-width: 1344px;">
+                    ${Array(12).fill('<div class="h-full bg-[#FF0000]/10 border-x border-[#FF0000]/20"></div>').join('')}
+                </div>
+            `;
+            
+            mainContainer.appendChild(gridOverlay);
+
+            const toggleGridBtn = document.createElement('button');
+            toggleGridBtn.id = 'toggle-grid-btn';
+            toggleGridBtn.className = 'fixed bottom-4 right-4 z-[999999] w-10 h-10 bg-slate-800/90 hover:bg-red-600 text-white hover:text-white rounded-full shadow-lg backdrop-blur-md border border-white/10 transition-all duration-300 active:scale-95 flex items-center justify-center font-bold text-xs';
+            toggleGridBtn.title = 'แสดง/ซ่อน Grid สีแดง (UX/UI Layout Helper)';
+            toggleGridBtn.innerHTML = '📐';
+            document.body.appendChild(toggleGridBtn);
+
+            toggleGridBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isHidden = gridOverlay.classList.toggle('hidden');
+                if (!isHidden) {
+                    toggleGridBtn.classList.add('bg-red-600');
+                    toggleGridBtn.classList.remove('bg-slate-800/90');
+                } else {
+                    toggleGridBtn.classList.remove('bg-red-600');
+                    toggleGridBtn.classList.add('bg-slate-800/90');
+                }
+            });
+        }
+    }
+}

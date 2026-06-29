@@ -65,57 +65,56 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
         </div>
 
         <!-- 2. แถบตัวกรองข้อมูลอัจฉริยะ (Interactive Filters) -->
-        <div class="glass-card p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col lg:flex-row gap-4 items-center justify-between mb-6 animate-fade-in-up">
-            <div class="flex items-center gap-3 w-full lg:w-auto shrink-0">
-                <span class="text-2xl">🔍</span>
-                <div>
-                    <h4 class="text-sm font-bold text-slate-800">ตัวกรองข้อมูล (Filters)</h4>
-                    <p class="text-xs text-slate-400 mt-1">กรองและวิเคราะห์แผนงาน OFI</p>
-                </div>
+        <div class="glass-card rounded-3xl border border-slate-200 shadow-sm mb-6 overflow-hidden animate-fade-in-up">
+            <div class="bg-[#00508F] px-5 py-3.5 flex items-center gap-2">
+                <span class="text-white text-lg">🔍</span>
+                <span class="text-white font-bold text-sm tracking-wide">กรองข้อมูล (Filters)</span>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 w-full flex-1 max-w-5xl">
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">หมวด (Module)</label>
-                    <select id="filter-module" class="w-full px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
-                        <option value="">ทั้งหมด (All)</option>
-                        ${modulesList.map(m => `<option value="${m}">${m}</option>`).join('')}
-                    </select>
+            <div class="p-5 space-y-4">
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">หมวด (Module)</label>
+                        <select id="filter-module" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                            <option value="">ทั้งหมด (All)</option>
+                            ${modulesList.map(m => `<option value="${m}">${m}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">ผู้ดูแล (Owner)</label>
+                        <select id="filter-owner" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                            <option value="">ทั้งหมด (All)</option>
+                            ${ownersList.map(o => `<option value="${o}" ${o === ownerName ? 'selected' : ''}>${o}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">สถานะ (Status)</label>
+                        <select id="filter-status" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                            <option value="">ทั้งหมด (All)</option>
+                            <option value="progress">In Progress</option>
+                            <option value="done">Done / Qualified</option>
+                            <option value="delayed">Delayed</option>
+                            <option value="not started">Not Started</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">ระดับความยาก (Level)</label>
+                        <select id="filter-level" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                            <option value="">ทั้งหมด (All)</option>
+                            ${levelsList.map(l => `<option value="${l}">L${l}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">ปีประเมิน (Year)</label>
+                        <select id="filter-year" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                            <option value="">ทั้งหมด (All)</option>
+                            ${yearsList.map(y => `<option value="${y}">${y}</option>`).join('')}
+                        </select>
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">ผู้ดูแล (Owner)</label>
-                    <select id="filter-owner" class="w-full px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
-                        <option value="">ทั้งหมด (All)</option>
-                        ${ownersList.map(o => `<option value="${o}" ${o === ownerName ? 'selected' : ''}>${o}</option>`).join('')}
-                    </select>
+                <div class="flex gap-2">
+                    <input type="text" id="filter-search" placeholder="🔎 ค้นหาหัวข้อ, รายละเอียด OFI, หรือรหัส..." class="w-full px-4 py-2.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                    <button id="filter-reset-btn" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 text-xs font-bold rounded-xl transition-all border border-slate-200">รีเซ็ต</button>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">สถานะ (Status)</label>
-                    <select id="filter-status" class="w-full px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
-                        <option value="">ทั้งหมด (All)</option>
-                        <option value="progress">In Progress</option>
-                        <option value="done">Done / Qualified</option>
-                        <option value="delayed">Delayed</option>
-                        <option value="not started">Not Started</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">ระดับความยาก (Level)</label>
-                    <select id="filter-level" class="w-full px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
-                        <option value="">ทั้งหมด (All)</option>
-                        ${levelsList.map(l => `<option value="${l}">L${l}</option>`).join('')}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">ปีประเมิน (Year)</label>
-                    <select id="filter-year" class="w-full px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
-                        <option value="">ทั้งหมด (All)</option>
-                        ${yearsList.map(y => `<option value="${y}">${y}</option>`).join('')}
-                    </select>
-                </div>
-            </div>
-            <div class="w-full lg:w-auto shrink-0 flex gap-2">
-                <input type="text" id="filter-search" placeholder="🔎 ค้นหาหัวข้อ / รายละเอียด..." class="w-full lg:w-44 px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
-                <button id="filter-reset-btn" class="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 text-xs font-bold rounded-xl transition-all border border-slate-200">รีเซ็ต</button>
             </div>
         </div>
 
@@ -123,31 +122,31 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
         <div id="dynamic-owner-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
 
         <!-- 4. ส่วนของตารางรายการข้อมูลดิบแบบละเอียดและ Pagination -->
-        <div class="glass-card p-6 rounded-3xl border border-slate-200 shadow-sm w-full mt-6 animate-fade-in-up">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
+        <div class="glass-card rounded-3xl border border-slate-200/80 shadow-sm w-full mt-6 overflow-hidden animate-fade-in-up bg-white/50">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-6 pb-4 border-b border-slate-100">
                 <div>
                     <h3 class="text-sm sm:text-base font-bold text-slate-800 flex items-center gap-2">📄 รายการแผนงาน OFI ในระบบ</h3>
                     <p class="text-xs text-slate-400">คลิกที่แถวของตารางเพื่อแสดงรายละเอียดและแผนความคืบหน้าเชิงลึก (Timeline)</p>
                 </div>
-                <div class="text-xs font-bold text-[#00508F] bg-blue-50 px-3 py-1 rounded-full border border-blue-100" id="table-total-count">แสดง 0 รายการ</div>
+                <div class="text-xs font-bold text-[#4F46E5] bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100" id="table-total-count">แสดง 0 รายการ</div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-xs sm:text-[13px] table-auto">
                     <thead>
-                        <tr class="text-slate-500 font-bold border-b border-slate-200/60 bg-slate-50/50 text-[11px] uppercase tracking-wider">
-                            <th class="py-3 px-3 w-[8%] min-w-[70px] text-center whitespace-nowrap">หมวด</th>
-                            <th class="py-3 px-3 w-[28%] min-w-[200px] whitespace-nowrap">หัวข้อการประเมิน (Topic)</th>
-                            <th class="py-3 px-3 w-[28%] min-w-[200px] whitespace-nowrap">รายละเอียด OFI (OFI Title)</th>
-                            <th class="py-3 px-3 w-[12%] min-w-[125px] whitespace-nowrap">ผู้รับผิดชอบ (Owner)</th>
-                            <th class="py-3 px-3 w-[8%] min-w-[90px] text-center whitespace-nowrap">สถานะ</th>
-                            <th class="py-3 px-3 w-[8%] min-w-[70px] text-right whitespace-nowrap">คะแนน</th>
-                            <th class="py-3 px-3 w-[6%] min-w-[60px] text-center whitespace-nowrap">ระดับ</th>
+                        <tr class="bg-[#4F46E5] text-white font-bold text-[11px] uppercase tracking-wider divide-x divide-white/10">
+                            <th class="py-3.5 px-4 w-[8%] min-w-[70px] text-center whitespace-nowrap">หมวด</th>
+                            <th class="py-3.5 px-4 w-[28%] min-w-[200px] whitespace-nowrap">หัวข้อการประเมิน (Topic)</th>
+                            <th class="py-3.5 px-4 w-[28%] min-w-[200px] whitespace-nowrap">รายละเอียด OFI (OFI Title)</th>
+                            <th class="py-3.5 px-4 w-[12%] min-w-[125px] whitespace-nowrap">ผู้รับผิดชอบ (Owner)</th>
+                            <th class="py-3.5 px-4 w-[8%] min-w-[90px] text-center whitespace-nowrap">สถานะ</th>
+                            <th class="py-3.5 px-4 w-[8%] min-w-[70px] text-right whitespace-nowrap">คะแนน</th>
+                            <th class="py-3.5 px-4 w-[6%] min-w-[60px] text-center whitespace-nowrap">ระดับ</th>
                         </tr>
                     </thead>
-                    <tbody id="table-ofi-list-body" class="divide-y divide-slate-100 hover:bg-slate-50/10"></tbody>
+                    <tbody id="table-ofi-list-body" class="divide-y divide-slate-200/60 bg-white/50"></tbody>
                 </table>
             </div>
-            <div id="table-pagination-controls" class="mt-4 border-t border-slate-100 pt-4"></div>
+            <div id="table-pagination-controls" class="p-4 bg-slate-50/50 border-t border-slate-200/60"></div>
         </div>
     `;
 
@@ -332,16 +331,16 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
             }
 
             return `
-                <tr class="hover:bg-blue-50/40 transition-colors group cursor-pointer animate-row-enter" data-id="${rId}">
-                    <td class="py-3.5 px-3 font-bold text-slate-700 text-center whitespace-nowrap">${rMod}</td>
-                    <td class="py-3.5 px-3 text-slate-600 max-w-[240px] lg:max-w-[340px] xl:max-w-[440px] truncate" title="${rTopic}">${rTopic}</td>
-                    <td class="py-3.5 px-3 font-semibold text-slate-800 max-w-[260px] lg:max-w-[380px] xl:max-w-[500px] truncate" title="${rTitle}">${rTitle}</td>
-                    <td class="py-3.5 px-3 text-slate-500 font-medium whitespace-nowrap">${rOwner}</td>
-                    <td class="py-3.5 px-3 text-center">
+                <tr class="hover:bg-indigo-50/40 transition-colors group cursor-pointer animate-row-enter" data-id="${rId}">
+                    <td class="py-3 px-4 font-bold text-slate-700 text-center whitespace-nowrap">${rMod}</td>
+                    <td class="py-3 px-4 text-slate-600 max-w-[240px] lg:max-w-[340px] xl:max-w-[440px] truncate" title="${rTopic}">${rTopic}</td>
+                    <td class="py-3 px-4 font-semibold text-slate-800 max-w-[260px] lg:max-w-[380px] xl:max-w-[500px] truncate" title="${rTitle}">${rTitle}</td>
+                    <td class="py-3 px-4 text-slate-500 font-medium whitespace-nowrap">${rOwner}</td>
+                    <td class="py-3 px-4 text-center">
                         <span class="px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap ${badgeClass}">${badgeText}</span>
                     </td>
-                    <td class="py-3.5 px-3 text-right font-mono font-bold text-slate-600 whitespace-nowrap">${rScore}</td>
-                    <td class="py-3.5 px-3 text-center font-bold text-[#00508F] whitespace-nowrap">${rLvl}</td>
+                    <td class="py-3 px-4 text-right font-mono font-bold text-slate-600 whitespace-nowrap">${rScore}</td>
+                    <td class="py-3 px-4 text-center font-bold text-[#4F46E5] whitespace-nowrap">${rLvl}</td>
                 </tr>
             `;
         }).join('');
@@ -356,7 +355,7 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
 
             for (let i = 1; i <= totalPages; i++) {
                 if (i === tablePage) {
-                    pagesHtml += `<button data-page="${i}" class="btn-table-page px-2.5 py-1 text-xs font-bold rounded-lg bg-[#00508F] text-white shadow-sm">${i}</button>`;
+                    pagesHtml += `<button data-page="${i}" class="btn-table-page px-2.5 py-1 text-xs font-bold rounded-lg bg-[#4F46E5] text-white shadow-sm">${i}</button>`;
                 } else {
                     pagesHtml += `<button data-page="${i}" class="btn-table-page px-2.5 py-1 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition">${i}</button>`;
                 }

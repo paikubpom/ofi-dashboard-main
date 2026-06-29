@@ -1,4 +1,4 @@
-import { getSharedHeaderHtml, showSharedGlassToast, showSharedGlassConfirm, zoomChart } from '../utils/uiHelpers.js';
+import { getSharedHeaderHtml, showSharedGlassToast, showSharedGlassConfirm, zoomChart, initSidebar } from '../utils/uiHelpers.js';
 import '../../css/input.css';
 
 class AdminApp {
@@ -31,6 +31,7 @@ class AdminApp {
 
     // 🚀 ฟังก์ชันหลักสำหรับเริ่มทำงาน
     async init() {
+        initSidebar('admin');
         console.log("Admin Dashboard Initialized.");
         this.renderGlobalHeader();
         this.setupEventListeners();
@@ -252,24 +253,24 @@ class AdminApp {
             const updateTime = new Date(f.modified * 1000).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' }) + ' น.';
             
             return `
-                <tr class="hover:bg-slate-50/80 transition-colors group">
-                    <td class="py-4 px-4 text-center align-middle">
-                        <input type="checkbox" class="file-select-checkbox w-4 h-4 text-blue-600 rounded border-slate-300 cursor-pointer focus:ring-0" data-name="${f.name}">
+                <tr class="hover:bg-slate-100/50 transition-colors group">
+                    <td class="py-3 px-4 text-center align-middle">
+                        <input type="checkbox" class="file-select-checkbox w-4 h-4 text-rose-600 rounded border-slate-300 cursor-pointer focus:ring-0" data-name="${f.name}">
                     </td>
-                    <td class="py-4 px-4 align-middle">
+                    <td class="py-3 px-4 text-center align-middle">
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" ${f.isActive ? 'checked' : ''} data-name="${f.name}" class="toggle-file-status sr-only peer">
-                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#00508F]"></div>
+                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#BE123C]"></div>
                         </label>
                     </td>
-                    <td class="py-4 px-4 font-semibold text-slate-700 flex items-center gap-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400 group-hover:text-[#00AEEF] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    <td class="py-3 px-4 font-semibold text-slate-700 flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400 group-hover:text-[#BE123C] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                         ${f.name}
                     </td>
-                    <td class="py-4 px-4 text-slate-500 font-medium">${uploadTime}</td>
-                    <td class="py-4 px-4 text-slate-500 font-medium">${updateTime}</td>
-                    <td class="py-4 px-4 text-right">
-                        <button data-name="${f.name}" class="btn-delete px-3 py-1.5 text-sm font-medium text-[#EB2227] bg-[#EB2227]/10 rounded-lg hover:bg-[#EB2227] hover:text-white transition-all">ลบไฟล์</button>
+                    <td class="py-3 px-4 text-slate-500 font-medium">${uploadTime}</td>
+                    <td class="py-3 px-4 text-slate-500 font-medium">${updateTime}</td>
+                    <td class="py-3 px-4 text-right">
+                        <button data-name="${f.name}" class="btn-delete px-3 py-1.5 text-xs font-bold text-rose-600 bg-rose-50 border border-rose-100 rounded-lg hover:bg-rose-600 hover:text-white transition-all shadow-sm">ลบไฟล์</button>
                     </td>
                 </tr>
             `;
@@ -294,7 +295,7 @@ class AdminApp {
 
         for (let i = 1; i <= totalPages; i++) {
             if (i === this.currentPage) {
-                html += `<button data-page="${i}" class="btn-page px-3 py-1.5 text-[11px] font-bold rounded-lg bg-[#00508F] text-white shadow-sm">${i}</button>`;
+                html += `<button data-page="${i}" class="btn-page px-3 py-1.5 text-[11px] font-bold rounded-lg bg-slate-800 text-white shadow-sm">${i}</button>`;
             } else {
                 html += `<button data-page="${i}" class="btn-page px-3 py-1.5 text-[11px] font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition">${i}</button>`;
             }

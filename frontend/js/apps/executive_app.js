@@ -1,6 +1,6 @@
 import { OFIDataService } from '../services/dataService.js';
 import { renderExecutiveView } from '../views/executive.js';
-import { getSharedHeaderHtml, getSharedRedFlagsHtml } from '../utils/uiHelpers.js';
+import { getSharedHeaderHtml, getSharedRedFlagsHtml, initSidebar } from '../utils/uiHelpers.js';
 import { initGlobalPdfExport } from '../utils/pdfHelper.js';
 import '../../css/input.css';
 
@@ -34,6 +34,7 @@ class ExecutiveApp {
     }
 
     async init() {
+        initSidebar('executive');
         this.clear();
         try {
             // 1. ดึงชุดข้อมูลหลังบ้านจริง

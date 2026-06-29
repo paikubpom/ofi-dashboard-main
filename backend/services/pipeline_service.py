@@ -220,10 +220,106 @@ class DataPipelineService:
             
         return records
 
+    def normalize_executive_dataframe(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
+        """Normalize executive projects dataframe columns to match sqlite schema."""
+        normalized_cols = {}
+        for col in df.columns:
+            c_clean = str(col).lower().replace('\n', ' ').strip()
+            if 'source' in c_clean or 'แหล่ง' in c_clean:
+                normalized_cols[col] = 'source'
+            elif 'project_name' in c_clean or 'project name' in c_clean or 'โครงการ' in c_clean or 'ชื่อโครงการ' in c_clean:
+                normalized_cols[col] = 'project_name'
+            elif 'status' in c_clean or 'สถานะ' in c_clean:
+                normalized_cols[col] = 'status'
+            elif 'desc' in c_clean or 'รายละเอียด' in c_clean:
+                normalized_cols[col] = 'description'
+            elif 'owner' in c_clean or 'ผู้รับผิดชอบ' in c_clean or 'ผู้ดูแล' in c_clean:
+                normalized_cols[col] = 'owner'
+            elif 'outcome' in c_clean or 'ผลลัพธ์' in c_clean:
+                normalized_cols[col] = 'outcome'
+            elif 'plan' in c_clean or 'แผน' in c_clean:
+                normalized_cols[col] = 'plan'
+            elif 'actual' in c_clean or 'ผลงาน' in c_clean or 'จริง' in c_clean:
+                normalized_cols[col] = 'actual'
+            elif 'progress' in c_clean or 'ความคืบหน้า' in c_clean:
+                normalized_cols[col] = 'progress'
+            elif 'sponsor' in c_clean or 'ผู้สนับสนุน' in c_clean:
+                normalized_cols[col] = 'sponsor'
+            elif 'avatar' in c_clean:
+                normalized_cols[col] = 'sponsor_avatar'
+            elif 'module' in c_clean or 'หมวด' in c_clean:
+                normalized_cols[col] = 'module'
+            elif 'level' in c_clean or 'ระดับ' in c_clean:
+                normalized_cols[col] = 'level'
+            elif 'year' in c_clean or 'ปี' in c_clean:
+                normalized_cols[col] = 'assessment_year'
+                
+        df = df.rename(columns={k: v for k, v in normalized_cols.items() if v not in df.columns})
+        
+        # Ensure fallback
+        if 'project_name' not in df.columns:
+            # Try to guess name column
+            for col in df.columns:
+                if 'name' in str(col).lower() or 'โครงการ' in str(col):
+                    df['project_name'] = df[col]
+                    break
+            if 'project_name' not in df.columns:
+                return []
+                
+        records = []
+        for _, row in df.iterrows():
+            rec = row.to_dict()
+            
+            # Clean values
+            try:
+                rec['plan'] = float(rec.get('plan') or 0.0)
+            except:
+                rec['plan'] = 0.0
+            try:
+                rec['actual'] = float(rec.get('actual') or 0.0)
+            except:
+                rec['actual'] = 0.0
+            try:
+                rec['progress'] = float(rec.get('progress') or 0.0)
+            except:
+                rec['progress'] = 0.0
+                
+            # Default fallbacks
+            rec['source'] = rec.get('source') or 'BU'
+            rec['status'] = rec.get('status') or 'On Track'
+            rec['description'] = rec.get('description') or ''
+            rec['owner'] = rec.get('owner') or 'ไม่ระบุ'
+            rec['outcome'] = rec.get('outcome') or 'Not Income'
+            rec['level'] = rec.get('level') or 'L3'
+            rec['assessment_year'] = rec.get('assessment_year') or 2568
+            rec['sponsor'] = rec.get('sponsor') or ''
+            
+            # Sponsor avatar
+            if rec.get('sponsor') and not rec.get('sponsor_avatar'):
+                parts = str(rec['sponsor']).split()
+                initials = "".join([p[0].upper() for p in parts if p[0].isalpha()])
+                rec['sponsor_avatar'] = initials[:2] or 'S'
+            else:
+                rec['sponsor_avatar'] = rec.get('sponsor_avatar') or 'S'
+                
+            # Clean keys that are not in the SQLite table schema
+            allowed_keys = {
+                'source', 'project_name', 'status', 'description', 'owner', 'outcome',
+                'plan', 'actual', 'progress', 'sponsor', 'sponsor_avatar', 'module', 'level', 'assessment_year'
+            }
+            cleaned_rec = {k: v for k, v in rec.items() if k in allowed_keys}
+            
+            # Skip empty or NaN project name rows
+            if cleaned_rec.get('project_name') and str(cleaned_rec['project_name']).strip() != "":
+                records.append(cleaned_rec)
+                
+        return records
+
     def load_and_merge_all_files(self) -> Dict[str, Any]:
         """Scan all files in data folder, merge active file data, write to SQLite."""
         base_data = self.settings_repo.load_base_structure()
         all_combined_ofis = []
+        all_combined_executive_projects = []
 
         if not os.path.exists(self.data_folder):
             os.makedirs(self.data_folder, exist_ok=True)
@@ -248,37 +344,54 @@ class DataPipelineService:
                     sheet_names = xls.sheet_names
                     
                     import re
+                    # Process regular OFI sheet
                     selected_sheet = None
                     for sheet in sheet_names:
                         if re.search(r"OFI Improvement Plan", sheet, re.IGNORECASE):
                             selected_sheet = sheet
                             break
                     
-                    if not selected_sheet:
-                        print(f"[Excel Loader] Skipping file '{file_name}' as it lacks a sheet matching regex 'OFI Improvement Plan'")
-                        continue
+                    if selected_sheet:
+                        print(f"[Excel Loader] Loading sheet '{selected_sheet}' from file '{file_name}'")
+                        df = pd.read_excel(file_path, sheet_name=selected_sheet)
+                        df = self.clean_header_row(df)
+                        df = df.where(pd.notnull(df), None)
+                        
+                        inferred_module = "RM&IC"
+                        for mod_code in ['CG&LD', 'SP', 'RM&IC', 'SM', 'CM', 'DT', 'HCM', 'KM', 'IM', 'IA']:
+                            target = mod_code.lower()
+                            if target in selected_sheet.lower() or target in file_name.lower():
+                                if target == 'im':
+                                    sh_clean = selected_sheet.lower().replace('improvement', '')
+                                    fn_clean = file_name.lower().replace('improvement', '')
+                                    if 'im' not in sh_clean and 'im' not in fn_clean:
+                                        continue
+                                inferred_module = mod_code
+                                break
+                        
+                        records = self.normalize_dataframe(df, inferred_module)
+                        for r in records: 
+                            r["_source_file"] = file_name
+                        all_combined_ofis.extend(records)
                     
-                    print(f"[Excel Loader] Loading sheet '{selected_sheet}' from file '{file_name}'")
-                    df = pd.read_excel(file_path, sheet_name=selected_sheet)
-                    df = self.clean_header_row(df)
-                    df = df.where(pd.notnull(df), None)
-                    
-                    inferred_module = "RM&IC"
-                    for mod_code in ['CG&LD', 'SP', 'RM&IC', 'SM', 'CM', 'DT', 'HCM', 'KM', 'IM', 'IA']:
-                        target = mod_code.lower()
-                        if target in selected_sheet.lower() or target in file_name.lower():
-                            if target == 'im':
-                                sh_clean = selected_sheet.lower().replace('improvement', '')
-                                fn_clean = file_name.lower().replace('improvement', '')
-                                if 'im' not in sh_clean and 'im' not in fn_clean:
-                                    continue
-                            inferred_module = mod_code
+                    # Process Executive Projects sheet
+                    exec_sheet = None
+                    for sheet in sheet_names:
+                        if re.search(r"Executive|Project", sheet, re.IGNORECASE):
+                            exec_sheet = sheet
                             break
+                            
+                    if not exec_sheet and re.search(r"Executive|Project", file_name, re.IGNORECASE):
+                        exec_sheet = sheet_names[0]
                     
-                    records = self.normalize_dataframe(df, inferred_module)
-                    for r in records: 
-                        r["_source_file"] = file_name
-                    all_combined_ofis.extend(records)
+                    if exec_sheet:
+                        print(f"[Excel Loader] Loading Executive Projects sheet '{exec_sheet}' from file '{file_name}'")
+                        df_exec = pd.read_excel(file_path, sheet_name=exec_sheet)
+                        df_exec = self.clean_header_row(df_exec)
+                        df_exec = df_exec.where(pd.notnull(df_exec), None)
+                        exec_records = self.normalize_executive_dataframe(df_exec)
+                        all_combined_executive_projects.extend(exec_records)
+                        
                 except Exception as e: 
                     print(f"[Error] Failed reading Excel {file_name}: {e}")
                     
@@ -312,6 +425,8 @@ class DataPipelineService:
                                 for r in json_content["ofiImprovements"]: 
                                     r["_source_file"] = file_name
                                 all_combined_ofis.extend(json_content["ofiImprovements"])
+                            if "projects" in json_content:
+                                all_combined_executive_projects.extend(json_content["projects"])
                             if "reference" in json_content: 
                                 base_data["reference"] = json_content["reference"]
                             if "topicScoreMaster" in json_content: 
@@ -338,6 +453,8 @@ class DataPipelineService:
                                 for r in js_data["ofiImprovements"]: 
                                     r["_source_file"] = file_name
                                 all_combined_ofis.extend(js_data["ofiImprovements"])
+                            if "projects" in js_data:
+                                all_combined_executive_projects.extend(js_data["projects"])
                             if "reference" in js_data: 
                                 base_data["reference"] = js_data["reference"]
                             if "topicScoreMaster" in js_data: 
@@ -365,6 +482,11 @@ class DataPipelineService:
                 cursor = conn.cursor()
                 cursor.execute("DROP TABLE IF EXISTS published_data")
                 conn.commit()
+
+            if all_combined_executive_projects:
+                exec_df = pd.DataFrame(all_combined_executive_projects)
+                exec_df.to_sql("executive_projects", conn, if_exists="replace", index=False)
+                print(f"[SQLite Pipeline] Saved {len(all_combined_executive_projects)} records to 'executive_projects'")
         except Exception as db_err:
             print(f"[SQLite Pipeline Error]: {db_err}")
         finally:

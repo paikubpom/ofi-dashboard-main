@@ -1,6 +1,6 @@
 import { OFIDataService } from '../services/dataService.js';
 import { renderOwnerView } from '../views/owner.js'; 
-import { getSharedHeaderHtml, getSharedRedFlagsHtml } from '../utils/uiHelpers.js';
+import { getSharedHeaderHtml, getSharedRedFlagsHtml, initSidebar } from '../utils/uiHelpers.js';
 import { initGlobalPdfExport } from '../utils/pdfHelper.js';
 import '../../css/input.css';
 
@@ -25,18 +25,34 @@ class OwnerApp {
         if (this.flagsDiv) this.flagsDiv.innerHTML = '';
     }
 
-    getKpiHtml() {
+    getKpiHtml(kpisOverride) {
         if (!this.data) return '';
-        const kpis = this.data.getKPIs();
+        const kpis = kpisOverride || this.data.getKPIs();
         return `
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6">
-                <div class="glass-card p-5 rounded-2xl border border-slate-200 shadow-sm"><p class="text-xs text-slate-400 font-bold uppercase">1.1 OFI ในความดูแล</p><p class="text-4xl font-black text-slate-800 mt-2">${kpis.total}</p></div>
-                <div class="glass-card p-5 rounded-2xl border border-slate-200 shadow-sm"><p class="text-xs text-slate-400 font-bold uppercase">1.2 อัตราปิดงานสำเร็จ</p><p class="text-4xl font-black text-emerald-500 mt-2">${kpis.successRate}%</p></div>
-                <div class="glass-card p-5 rounded-2xl border border-rose-200 bg-rose-50/50 shadow-sm"><p class="text-xs text-rose-400 font-bold uppercase">1.3 งานค้างวิกฤต (Delayed)</p><p class="text-4xl font-black text-rose-600 mt-2">${kpis.delayed}</p></div>
+                <div class="glass-card p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+                    <div>
+                        <span class="text-xs text-slate-400 font-extrabold uppercase tracking-wider flex items-center gap-1.5">📋 OFI ในความดูแล</span>
+                        <p class="text-3xl font-black text-slate-800 mt-2">${kpis.total}</p>
+                    </div>
+                </div>
+                <div class="glass-card p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+                    <div>
+                        <span class="text-xs text-slate-400 font-extrabold uppercase tracking-wider flex items-center gap-1.5">⚡ อัตราปิดงานสำเร็จ</span>
+                        <p class="text-3xl font-black text-emerald-500 mt-2">${kpis.successRate}%</p>
+                    </div>
+                </div>
+                <div class="glass-card p-5 rounded-2xl border border-rose-200 bg-rose-50/50 shadow-sm flex flex-col justify-between hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+                    <div>
+                        <span class="text-xs text-rose-400 font-extrabold uppercase tracking-wider flex items-center gap-1.5">🚨 งานค้างวิกฤต (DELAYED)</span>
+                        <p class="text-3xl font-black text-rose-600 mt-2">${kpis.delayed}</p>
+                    </div>
+                </div>
             </div>`;
     }
 
     async init() {
+        initSidebar('owner', this.ownerKey);
         this.clear();
         try {
             const res = await fetch(`${this.API_BASE_URL}/api/dashboard-data?t=${Date.now()}`, { 

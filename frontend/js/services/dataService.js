@@ -5,7 +5,9 @@ export class OFIDataService {
         this.owners = data?.reference?.elementOwners || [];
         this.scores = data?.topicScoreMaster?.enablers || [];
         this.phasesInfo = data?.reference?.phases || [];
+        this.projects = data?.projects || [];
     }
+
 
     getKPIs() {
         const total = this.ofis.length;

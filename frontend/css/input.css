@@ -5,8 +5,14 @@
 @tailwind utilities;
 
 @layer base {
+    html {
+        overscroll-behavior: none;
+        overflow-x: clip;
+    }
     body {
         font-family: 'Inter', 'Noto Sans Thai', system-ui, -apple-system, sans-serif;
+        overscroll-behavior: none;
+        overflow-x: clip;
     }
 }
 

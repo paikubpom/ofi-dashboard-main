@@ -72,3 +72,20 @@ class OFIRepository:
             return []
         finally:
             conn.close()
+
+    def get_executive_projects(self) -> List[Dict[str, Any]]:
+        """Fetch all executive projects from database."""
+        conn = self.db.get_connection()
+        try:
+            query = "SELECT * FROM executive_projects"
+            import pandas as pd
+            df = pd.read_sql_query(query, conn)
+            # Convert NaN to None for JSON compliance
+            df = df.astype(object).where(pd.notnull(df), None)
+            return df.to_dict(orient="records")
+        except Exception as e:
+            print(f"[OFIRepository.get_executive_projects Error]: {e}")
+            return []
+        finally:
+            conn.close()
+
