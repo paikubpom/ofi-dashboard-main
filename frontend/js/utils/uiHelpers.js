@@ -699,7 +699,7 @@ export async function initSidebar(currentRole, activeOwnerKey = '') {
 
     const sidebar = document.createElement('aside');
     sidebar.id = 'sidebar-container';
-    sidebar.className = 'sidebar-glass text-white shrink-0 flex flex-col justify-between h-screen fixed lg:sticky top-0 z-[9999]';
+    sidebar.className = 'sidebar-glass text-white shrink-0 flex flex-col justify-between h-screen fixed top-0 z-[9999]';
 
     const getActiveCls = (role) => currentRole.toLowerCase() === role.toLowerCase() 
         ? 'bg-blue-600/35 border-l-4 border-blue-500 font-extrabold text-blue-200' 
@@ -788,14 +788,10 @@ export async function initSidebar(currentRole, activeOwnerKey = '') {
         </button>
     `;
 
-    // 🛠️ แก้ไขที่ 1: ค้นหา mainContainer ที่แท้จริง โดยข้ามกล่อง Background Liquid
+    // 1. ค้นหากล่องเนื้อหาหลัก (ข้ามตัวฉากหลังแบบ Background Liquid)
     const allDivs = document.querySelectorAll('body > div');
     let mainContainer = Array.from(allDivs).find(el => !el.classList.contains('pointer-events-none') && !el.classList.contains('fixed'));
-    
-    // สำรองในกรณีหาไม่เจอ ให้ดึงตัวสุดท้ายมาใช้
-    if (!mainContainer && allDivs.length > 0) {
-        mainContainer = allDivs[allDivs.length - 1];
-    }
+    if (!mainContainer && allDivs.length > 0) mainContainer = allDivs[allDivs.length - 1];
 
     if (mainContainer) {
         const body = document.body;
@@ -804,9 +800,7 @@ export async function initSidebar(currentRole, activeOwnerKey = '') {
         // Load side state (collapse/expand)
         const isMobile = window.innerWidth < 1024;
         const localCollapsed = localStorage.getItem('sidebar-collapsed');
-        const shouldCollapse = localCollapsed !== null 
-            ? localCollapsed === 'true' 
-            : isMobile;
+        const shouldCollapse = localCollapsed !== null ? localCollapsed === 'true' : isMobile;
 
         if (shouldCollapse) {
             body.classList.add('sidebar-collapsed');
@@ -849,6 +843,8 @@ export async function initSidebar(currentRole, activeOwnerKey = '') {
                     opacity: 0;
                     pointer-events: none;
                 }
+
+                /* 🌟 การตั้งค่าปุ่ม Toggle */
                 #sidebar-toggle-handle {
                     position: absolute;
                     top: 1.25rem;
@@ -862,12 +858,8 @@ export async function initSidebar(currentRole, activeOwnerKey = '') {
                     background-color: rgba(51, 65, 85, 0.9);
                     color: #ffffff;
                 }
-                #sidebar-toggle-handle .icon-hamburger {
-                    display: none;
-                }
-                #sidebar-toggle-handle .icon-arrow {
-                    display: block;
-                }
+                #sidebar-toggle-handle .icon-hamburger { display: none; }
+                #sidebar-toggle-handle .icon-arrow { display: block; }
 
                 .sidebar-collapsed #sidebar-toggle-handle {
                     right: auto !important;
@@ -882,40 +874,77 @@ export async function initSidebar(currentRole, activeOwnerKey = '') {
                     background-color: #f8fafc !important;
                     color: #0f172a !important;
                 }
-                .sidebar-collapsed #sidebar-toggle-handle .icon-hamburger {
-                    display: block;
+                .sidebar-collapsed #sidebar-toggle-handle .icon-hamburger { display: block; }
+                .sidebar-collapsed #sidebar-toggle-handle .icon-arrow { display: none; }
+
+                /* 🌟 RESPONSIVE MAGIC สำหรับ Content หลัก (เมื่ออยู่บนจอคอม เนื้อหาจะหลบ Sidebar ไม่ให้ทับกัน) */
+                #main-container-layout {
+                    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    width: 100%;
+                    margin-left: 0;
                 }
-                .sidebar-collapsed #sidebar-toggle-handle .icon-arrow {
-                    display: none;
+                @media (min-width: 1024px) {
+                    body:not(.sidebar-collapsed) #main-container-layout {
+                        margin-left: 16rem;
+                        width: calc(100% - 16rem);
+                    }
+                }
+
+                /* 🌟 Backdrop สำหรับจอมือถือ/แท็บเล็ต (หน้าจอเล็กจะแสดงพื้นหลังดำเวลาเปิด Sidebar) */
+                #sidebar-backdrop {
+                    position: fixed;
+                    inset: 0;
+                    background-color: rgba(15, 23, 42, 0.5);
+                    backdrop-filter: blur(4px);
+                    z-index: 9998;
+                    transition: opacity 0.3s ease;
+                    opacity: 0;
+                    pointer-events: none;
+                }
+                body:not(.sidebar-collapsed) #sidebar-backdrop {
+                    opacity: 1;
+                    pointer-events: auto;
+                }
+                @media (min-width: 1024px) {
+                    #sidebar-backdrop { display: none !important; }
                 }
             `;
             document.head.appendChild(style);
         }
 
-        // แทรก Sidebar เข้าไปใน Container จริง
-        mainContainer.prepend(sidebar);
-        
-        // 🛠️ แก้ไขที่ 2: ล้างคลาส % ออก บังคับให้พื้นที่ทำงานเต็มจอตลอดเวลา
+        // แทรก Sidebar และ Backdrop แยกออกมาเป็นพี่น้องกับ mainContainer
+        mainContainer.id = 'main-container-layout';
         mainContainer.className = 'w-full min-h-screen py-4 md:py-6 relative flex flex-col';
+        
+        const backdrop = document.createElement('div');
+        backdrop.id = 'sidebar-backdrop';
+        
+        document.body.insertBefore(sidebar, mainContainer);
+        document.body.insertBefore(backdrop, mainContainer);
 
-        // 🛠️ แก้ไขที่ 3: ห่อเนื้อหาในกล่องขนาด 1344px เท่า Grid เป๊ะๆ
+        // จัดการโครงสร้างเนื้อหาให้อยู่ในกรอบ 1344px อย่างสมบูรณ์
         let wrapper = mainContainer.querySelector('.main-grid-wrapper');
         if (!wrapper) {
             wrapper = document.createElement('div');
             wrapper.className = 'main-grid-wrapper w-full mx-auto px-4 xl:px-0 space-y-6';
-            wrapper.style.maxWidth = '1344px'; // ใช้ style กัน Tailwind Purge
+            wrapper.style.maxWidth = '1344px'; // ควบคุมให้เท่ากับ Grid เป๊ะๆ
             
             const childNodes = Array.from(mainContainer.childNodes);
             childNodes.forEach(child => {
-                if (child !== sidebar && child !== wrapper) {
+                if (child !== wrapper && child.id !== 'ux-grid-overlay') {
                     wrapper.appendChild(child);
                 }
             });
             mainContainer.appendChild(wrapper);
-        } else {
-            wrapper.className = 'main-grid-wrapper w-full mx-auto px-4 xl:px-0 space-y-6';
-            wrapper.style.maxWidth = '1344px';
         }
+
+        // --- ระบบ Click Event ต่างๆ ---
+        backdrop.addEventListener('click', () => {
+            if (window.innerWidth < 1024) {
+                body.classList.add('sidebar-collapsed');
+                localStorage.setItem('sidebar-collapsed', 'true');
+            }
+        });
 
         const ownerBtn = sidebar.querySelector('#sidebar-owner-btn');
         const ownerList = sidebar.querySelector('#sidebar-owner-list');
@@ -936,14 +965,6 @@ export async function initSidebar(currentRole, activeOwnerKey = '') {
                 localStorage.setItem('sidebar-collapsed', body.classList.contains('sidebar-collapsed'));
             });
         }
-
-        document.addEventListener('click', (e) => {
-            if (window.innerWidth < 1024) {
-                if (!sidebar.contains(e.target) && !e.target.closest('#sidebar-toggle-handle')) {
-                    body.classList.add('sidebar-collapsed');
-                }
-            }
-        });
 
         // 📐 สร้าง Grid สีแดงสำหรับตรวจสอบการจัดวางหน้าจอ (UX/UI Red Grid Overlay Helper)
         if (!document.getElementById('ux-grid-overlay')) {
