@@ -263,33 +263,266 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
             `;
         }).join('');
 
-        // Render Pagination
-        if (totalPages <= 1) {
-            paginationWrapper.innerHTML = '';
-        } else {
-            const startItem = startIndex + 1;
-            const endItem = Math.min(endIndex, count);
-            let pagesHtml = '';
+        // Render Popup Button instead of Pagination
+        paginationWrapper.innerHTML = `
+            <div class="flex items-center justify-between">
+                <p class="text-xs text-slate-500 font-medium">แสดงตัวอย่าง <span class="font-bold text-slate-700">${Math.min(5, count)}</span> จากทั้งหมด <span class="font-bold text-slate-700">${count}</span> รายการ</p>
+                <button id="btn-open-projects-popup" class="px-4 py-2 bg-[#00508F] hover:bg-[#003d70] text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-1.5 cursor-pointer">
+                    🔎 แสดงโครงการทั้งหมด (Scrollable Popup)
+                </button>
+            </div>
+        `;
 
-            for (let i = 1; i <= totalPages; i++) {
-                if (i === tablePage) {
-                    pagesHtml += `<button data-page="${i}" class="btn-table-page px-2.5 py-1 text-xs font-bold rounded-lg bg-[#00508F] text-white shadow-sm">${i}</button>`;
-                } else {
-                    pagesHtml += `<button data-page="${i}" class="btn-table-page px-2.5 py-1 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition">${i}</button>`;
-                }
-            }
+        const showProjectsPopup = () => {
+            let localFilters = {
+                source: '',
+                status: '',
+                level: '',
+                year: '',
+                owner: ''
+            };
 
-            paginationWrapper.innerHTML = `
-                <div class="flex items-center justify-between">
-                    <p class="text-xs text-slate-500 font-medium">แสดง <span class="font-bold text-slate-700">${startItem}</span> ถึง <span class="font-bold text-slate-700">${endItem}</span> จากทั้งหมด <span class="font-bold text-slate-700">${count}</span> รายการ</p>
-                    <div class="flex gap-1">
-                        <button data-page="${tablePage - 1}" class="btn-table-page px-2.5 py-1 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition" ${tablePage === 1 ? 'disabled' : ''}>&laquo; ก่อนหน้า</button>
-                        ${pagesHtml}
-                        <button data-page="${tablePage + 1}" class="btn-table-page px-2.5 py-1 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition" ${tablePage === totalPages ? 'disabled' : ''}>ถัดไป &raquo;</button>
+            const sourcesList = [...new Set(filteredRecords.map(r => r.source).filter(Boolean))].sort();
+            const statusesList = [...new Set(filteredRecords.map(r => r.status).filter(Boolean))].sort();
+            const levelsList = [...new Set(filteredRecords.map(r => r.level).filter(Boolean))].sort();
+            const yearsList = [...new Set(filteredRecords.map(r => r.assessment_year).filter(Boolean))].sort();
+            const ownersList = [...new Set(filteredRecords.map(r => r.owner).filter(Boolean))].sort();
+
+            const renderPopupRows = () => {
+                const filtered = filteredRecords.filter(r => {
+                    if (localFilters.source && r.source !== localFilters.source) return false;
+                    if (localFilters.status && r.status !== localFilters.status) return false;
+                    if (localFilters.level && r.level !== localFilters.level) return false;
+                    if (localFilters.year && r.assessment_year !== localFilters.year) return false;
+                    if (localFilters.owner && r.owner !== localFilters.owner) return false;
+                    return true;
+                });
+
+                const tableRowsHtml = filtered.map(r => {
+                    const progColor = r.progress < 15 ? 'bg-amber-500' : 'bg-blue-500';
+                    const sponsorInitials = r.sponsor_avatar || 'S';
+                    let avatarBg = 'bg-blue-600';
+                    if (sponsorInitials === 'SL') avatarBg = 'bg-emerald-600';
+                    else if (sponsorInitials === 'CK') avatarBg = 'bg-[#3B82F6]';
+
+                    return `
+                        <tr data-id="${r.id}" class="hover:bg-slate-50/50 transition-colors group cursor-pointer border-b border-slate-100">
+                            <td class="py-3 px-4 text-center">
+                                <span class="px-2.5 py-0.5 bg-blue-100/70 text-blue-800 text-[10px] font-bold rounded-lg border border-blue-200/50 whitespace-nowrap">${r.source}</span>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="font-bold text-slate-800 leading-tight">${r.project_name}</div>
+                                <div class="mt-1">
+                                    <span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 text-[9px] font-bold rounded-md whitespace-nowrap">${r.status}</span>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 text-slate-600 text-xs font-semibold leading-relaxed">
+                                ${r.description}
+                            </td>
+                            <td class="py-3 px-4 font-bold text-slate-700 whitespace-nowrap">
+                                ${r.owner}
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                <span class="px-2 py-0.5 bg-slate-200 text-slate-600 text-[10px] font-bold rounded-md whitespace-nowrap">${r.outcome}</span>
+                            </td>
+                            <td class="py-3 px-4 text-right font-mono font-bold text-slate-600 whitespace-nowrap">
+                                ${formatNumber(r.plan, 2)}
+                            </td>
+                            <td class="py-3 px-4 text-right font-mono font-bold text-[#10B981] whitespace-nowrap">
+                                ${formatNumber(r.actual, 2)}
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="flex items-center gap-2 min-w-[80px]">
+                                    <div class="w-16 bg-slate-200 h-2 rounded-full overflow-hidden shrink-0">
+                                        <div class="${progColor} h-full" style="width: ${r.progress}%"></div>
+                                    </div>
+                                    <span class="font-mono font-extrabold text-slate-600 text-xs">${r.progress}%</span>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-full ${avatarBg} text-white flex items-center justify-center text-[10px] font-black shrink-0 shadow-sm">${sponsorInitials}</div>
+                                    <span class="text-xs font-bold text-slate-600 truncate max-w-[120px]" title="${r.sponsor}">${r.sponsor}</span>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200/50">
+                                    <svg class="w-4 h-4 text-slate-400" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                    </svg>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+                const tbody = document.getElementById('popup-table-body');
+                if (tbody) tbody.innerHTML = tableRowsHtml || `<tr><td colspan="10" class="py-10 text-center text-slate-400 font-medium">ไม่พบรายการโครงการที่ตรงตามตัวกรองของคุณ</td></tr>`;
+
+                const countEl = document.getElementById('popup-total-count-badge');
+                if (countEl) countEl.innerText = `แสดง ${filtered.length} รายการ`;
+            };
+
+            const popupContentHtml = `
+                <div class="space-y-4">
+                    <!-- Popup Filter Bar -->
+                    <div class="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/60 flex flex-wrap gap-3 items-center">
+                        <span class="text-xs font-bold text-slate-500 flex items-center gap-1">🔎 ตัวกรองด่วน:</span>
+                        <select id="popup-filter-source" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400">
+                            <option value="">แหล่งที่มา: ทั้งหมด</option>
+                            ${sourcesList.map(s => `<option value="${s}">${s}</option>`).join('')}
+                        </select>
+                        <select id="popup-filter-status" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400">
+                            <option value="">สถานะ: ทั้งหมด</option>
+                            ${statusesList.map(s => `<option value="${s}">${s}</option>`).join('')}
+                        </select>
+                        <select id="popup-filter-level" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400">
+                            <option value="">ระดับ: ทั้งหมด</option>
+                            ${levelsList.map(l => `<option value="${l}">${l}</option>`).join('')}
+                        </select>
+                        <select id="popup-filter-year" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400">
+                            <option value="">ปีประเมิน: ทั้งหมด</option>
+                            ${yearsList.map(y => `<option value="${y}">${y}</option>`).join('')}
+                        </select>
+                        <select id="popup-filter-owner" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400">
+                            <option value="">ผู้ดูแล: ทั้งหมด</option>
+                            ${ownersList.map(o => `<option value="${o}">${o}</option>`).join('')}
+                        </select>
+                        <div class="ml-auto text-xs font-bold text-[#00508F] bg-blue-50 px-3 py-1 rounded-full border border-blue-100 whitespace-nowrap" id="popup-total-count-badge">แสดง ${filteredRecords.length} รายการ</div>
+                    </div>
+
+                    <div class="overflow-hidden border border-slate-200/80 rounded-2xl shadow-sm bg-white">
+                        <div class="overflow-x-auto max-h-[72vh] overflow-y-auto" style="overscroll-behavior: contain;">
+                            <table class="w-full text-left border-collapse text-xs sm:text-[13px] table-auto">
+                                <thead>
+                                    <tr class="bg-[#00508F] text-white font-bold text-[11px] uppercase tracking-wider divide-x divide-white/10 sticky top-0 z-10">
+                                        <th class="py-3.5 px-4 w-[8%] text-center whitespace-nowrap">SOURCE</th>
+                                        <th class="py-3.5 px-4 w-[16%] whitespace-nowrap">PROJECT NAME</th>
+                                        <th class="py-3.5 px-4 w-[28%] whitespace-nowrap">DESCRIPTION</th>
+                                        <th class="py-3.5 px-4 w-[10%] whitespace-nowrap">OWNER</th>
+                                        <th class="py-3.5 px-4 w-[10%] text-center whitespace-nowrap">OUTCOME</th>
+                                        <th class="py-3.5 px-4 w-[8%] text-right whitespace-nowrap">PLAN</th>
+                                        <th class="py-3.5 px-4 w-[8%] text-right whitespace-nowrap">ACTUAL</th>
+                                        <th class="py-3.5 px-4 w-[12%] whitespace-nowrap">PROGRESS</th>
+                                        <th class="py-3.5 px-4 w-[12%] whitespace-nowrap">SPONSOR</th>
+                                        <th class="py-3.5 px-4 w-[4%] text-center whitespace-nowrap"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="popup-table-body" class="divide-y divide-slate-100 bg-white">
+                                    <!-- rows injected dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             `;
+
+            showSharedGlassModal("ตารางโครงการทั้งหมด", `จำนวนโครงการทั้งหมด ${count} รายการ`, popupContentHtml, 'full');
+
+            renderPopupRows();
+
+            const pSource = document.getElementById('popup-filter-source');
+            const pStatus = document.getElementById('popup-filter-status');
+            const pLevel = document.getElementById('popup-filter-level');
+            const pYear = document.getElementById('popup-filter-year');
+            const pOwner = document.getElementById('popup-filter-owner');
+
+            const handleLocalFilterChange = () => {
+                localFilters.source = pSource.value;
+                localFilters.status = pStatus.value;
+                localFilters.level = pLevel.value;
+                localFilters.year = pYear.value;
+                localFilters.owner = pOwner.value;
+                renderPopupRows();
+            };
+
+            pSource.addEventListener('change', handleLocalFilterChange);
+            pStatus.addEventListener('change', handleLocalFilterChange);
+            pLevel.addEventListener('change', handleLocalFilterChange);
+            pYear.addEventListener('change', handleLocalFilterChange);
+            pOwner.addEventListener('change', handleLocalFilterChange);
+
+            const popupTableBody = document.getElementById('popup-table-body');
+            if (popupTableBody) {
+                popupTableBody.addEventListener('click', (e) => {
+                    const row = e.target.closest('tr');
+                    if (!row) return;
+                    const id = row.getAttribute('data-id');
+                    if (!id) return;
+                    const record = rawRecords.find(r => String(r.id) === String(id));
+                    if (!record) return;
+                    showProjectDetailModal(record);
+                });
+            }
+        };
+
+        const btnOpen = document.getElementById('btn-open-projects-popup');
+        if (btnOpen) {
+            btnOpen.addEventListener('click', showProjectsPopup);
         }
+    };
+
+    const showProjectDetailModal = (record, row = null) => {
+        const modalContent = `
+            <div class="space-y-5 py-2">
+                <div class="p-4 bg-blue-50/70 rounded-2xl border border-blue-100/80">
+                    <h5 class="text-[11px] font-extrabold text-[#00508F] uppercase tracking-wider mb-1">ชื่อโครงการ (Project Name)</h5>
+                    <p class="text-sm font-bold text-slate-800 leading-relaxed">${record.project_name}</p>
+                </div>
+                
+                <div>
+                    <h5 class="text-[11px] font-extrabold text-[#00508F] uppercase tracking-wider mb-2">รายละเอียดโครงการ (Description)</h5>
+                    <p class="text-xs font-semibold text-slate-900 leading-relaxed bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80">${record.description || 'ไม่มีรายละเอียด'}</p>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100">
+                        <span class="block text-[10px] font-extrabold text-slate-600 uppercase">ผู้ดูแล (Owner)</span>
+                        <span class="block text-xs font-bold text-slate-800 mt-1">${record.owner || '-'}</span>
+                    </div>
+                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100">
+                        <span class="block text-[10px] font-extrabold text-slate-600 uppercase">แหล่งที่มา (Source)</span>
+                        <span class="block text-xs font-bold text-slate-800 mt-1">${record.source || '-'}</span>
+                    </div>
+                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100">
+                        <span class="block text-[10px] font-extrabold text-slate-600 uppercase">เป้าหมาย (Plan)</span>
+                        <span class="block text-xs font-mono font-black text-slate-800 mt-1">${formatNumber(record.plan, 2)}</span>
+                    </div>
+                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100">
+                        <span class="block text-[10px] font-extrabold text-slate-600 uppercase">ผลงานจริง (Actual)</span>
+                        <span class="block text-xs font-mono font-black text-slate-800 mt-1">${formatNumber(record.actual, 2)}</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100 flex flex-col justify-center animate-pulse">
+                        <span class="block text-[10px] font-extrabold text-slate-600 uppercase">ความคืบหน้าโครงการ</span>
+                        <div class="flex items-center justify-center gap-3 mt-2">
+                            <div class="w-24 bg-slate-200 h-2.5 rounded-full overflow-hidden shrink-0">
+                                <div class="bg-blue-500 h-full" style="width: ${record.progress || 0}%"></div>
+                            </div>
+                            <span class="font-mono font-extrabold text-slate-800 text-xs">${record.progress || 0}%</span>
+                        </div>
+                    </div>
+                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100">
+                        <span class="block text-[10px] font-extrabold text-slate-600 uppercase">ผลลัพธ์โครงการ (Outcome)</span>
+                        <span class="block text-xs font-bold text-slate-800 mt-1.5">${record.outcome || '-'}</span>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-200/50 pt-4 flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[11px] font-extrabold text-[#00508F] uppercase tracking-wider">ผู้สนับสนุนโครงการ (Sponsor)</span>
+                    </div>
+                    <span class="text-xs font-bold text-slate-800">${record.sponsor || '-'}</span>
+                </div>
+            </div>`;
+
+        const onClose = () => {
+            if (row) row.classList.remove('active-selected-row');
+        };
+
+        showSharedGlassModal(`รายละเอียดโครงการ: ${record.project_name}`, `ประเภท/ระดับความยาก: ${record.level || 'L3'} | ปีประเมิน: ${record.assessment_year || '2568'}`, modalContent, 'md', onClose);
     };
 
     // Filter Change Event Handlers
@@ -349,75 +582,7 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
         });
         row.classList.add('active-selected-row');
 
-        const modalContent = `
-            <div class="space-y-5 py-2">
-                <div class="p-4 bg-blue-50/70 rounded-2xl border border-blue-100/80">
-                    <h5 class="text-[11px] font-extrabold text-[#00508F] uppercase tracking-wider mb-1">ชื่อโครงการ (Project Name)</h5>
-                    <p class="text-sm font-bold text-slate-800 leading-relaxed">${record.project_name}</p>
-                </div>
-                
-                <div>
-                    <h5 class="text-[11px] font-extrabold text-[#00508F] uppercase tracking-wider mb-2">รายละเอียดโครงการ (Description)</h5>
-                    <p class="text-xs font-semibold text-slate-900 leading-relaxed bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80">${record.description || 'ไม่มีรายละเอียด'}</p>
-                </div>
-
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100">
-                        <span class="block text-[10px] font-extrabold text-slate-600 uppercase">ผู้ดูแล (Owner)</span>
-                        <span class="block text-xs font-bold text-slate-800 mt-1">${record.owner || '-'}</span>
-                    </div>
-                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100">
-                        <span class="block text-[10px] font-extrabold text-slate-600 uppercase">แหล่งที่มา (Source)</span>
-                        <span class="block text-xs font-bold text-slate-800 mt-1">${record.source || '-'}</span>
-                    </div>
-                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100">
-                        <span class="block text-[10px] font-extrabold text-slate-600 uppercase">เป้าหมาย (Plan)</span>
-                        <span class="block text-xs font-mono font-black text-slate-800 mt-1">${formatNumber(record.plan, 2)}</span>
-                    </div>
-                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100">
-                        <span class="block text-[10px] font-extrabold text-slate-600 uppercase">ผลงานจริง (Actual)</span>
-                        <span class="block text-xs font-mono font-black text-slate-800 mt-1">${formatNumber(record.actual, 2)}</span>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100 flex flex-col justify-center animate-pulse">
-                        <span class="block text-[10px] font-extrabold text-slate-600 uppercase">ความคืบหน้าโครงการ</span>
-                        <div class="flex items-center justify-center gap-3 mt-2">
-                            <div class="w-24 bg-slate-200 h-2.5 rounded-full overflow-hidden shrink-0">
-                                <div class="bg-blue-500 h-full" style="width: ${record.progress || 0}%"></div>
-                            </div>
-                            <span class="font-mono font-extrabold text-slate-800 text-xs">${record.progress || 0}%</span>
-                        </div>
-                    </div>
-                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100">
-                        <span class="block text-[10px] font-extrabold text-slate-600 uppercase">ผลลัพธ์โครงการ (Outcome)</span>
-                        <span class="block text-xs font-bold text-slate-800 mt-1.5">${record.outcome || '-'}</span>
-                    </div>
-                </div>
-
-                <div class="border-t border-slate-200/50 pt-4 flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <div class="flex items-center gap-2">
-                        <span class="text-[11px] font-extrabold text-[#00508F] uppercase tracking-wider">ผู้สนับสนุนโครงการ (Sponsor)</span>
-                    </div>
-                    <span class="text-xs font-bold text-slate-800">${record.sponsor || '-'}</span>
-                </div>
-            </div>`;
-
-        const onClose = () => {
-            row.classList.remove('active-selected-row');
-        };
-
-        showSharedGlassModal(`รายละเอียดโครงการ: ${record.project_name}`, `ประเภท/ระดับความยาก: ${record.level || 'L3'} | ปีประเมิน: ${record.assessment_year || '2568'}`, modalContent, 'md', onClose);
-    });
-
-    paginationWrapper.addEventListener('click', (e) => {
-        const btn = e.target.closest('.btn-table-page');
-        if (btn && !btn.disabled) {
-            tablePage = parseInt(btn.getAttribute('data-page'));
-            updateDashboard();
-            tableBody.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
+        showProjectDetailModal(record, row);
     });
 
     // Initial load

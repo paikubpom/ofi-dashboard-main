@@ -46,7 +46,8 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
         status: '',
         levels: [],
         search: '',
-        year: ''
+        year: '',
+        topicGroup: ''
     };
 
     let tablePage = 1;
@@ -57,6 +58,17 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
     const ownersList = [...new Set(rawRecords.map(r => getRecordOwnerName(r)).filter(Boolean))].sort();
     const levelsList = [...new Set(rawRecords.map(r => r.ofiLevel).filter(Boolean))].sort();
     const yearsList = [...new Set(rawRecords.map(r => getRecordYear(r)).filter(Boolean))].sort();
+
+    // Extract unique main topics (e.g. ข้อ 1, ข้อ 2)
+    const mainTopicsList = [...new Set(rawRecords.map(r => {
+        const topicName = getRecordTopicName(r);
+        const match = topicName.match(/^(\d+)/);
+        return match ? `ข้อ ${match[1]}` : 'อื่นๆ';
+    }).filter(Boolean))].sort((a, b) => {
+        const numA = parseInt(a.replace(/\D/g, '')) || 999;
+        const numB = parseInt(b.replace(/\D/g, '')) || 999;
+        return numA - numB;
+    });
 
     // ประกอบโครงสร้าง HTML พื้นฐาน (ฟิลเตอร์ + กริดกราฟ + ตารางข้อมูลดิบ)
     appInstance.contentDiv.innerHTML = `
@@ -128,19 +140,27 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
                     <h3 class="text-sm sm:text-base font-bold text-slate-800 flex items-center gap-2">📄 รายการแผนงาน OFI ในระบบ</h3>
                     <p class="text-xs text-slate-400">คลิกที่แถวของตารางเพื่อแสดงรายละเอียดและแผนความคืบหน้าเชิงลึก (Timeline)</p>
                 </div>
-                <div class="text-xs font-bold text-[#4F46E5] bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100" id="table-total-count">แสดง 0 รายการ</div>
+                <div class="flex items-center gap-3 w-full sm:w-auto self-stretch sm:self-auto justify-between sm:justify-end">
+                    <div class="flex items-center gap-2 shrink-0">
+                        <span class="text-xs font-bold text-slate-500 whitespace-nowrap">หัวข้อใหญ่:</span>
+                        <select id="filter-topic-group" class="px-2.5 py-1 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                            <option value="">ทั้งหมด (All)</option>
+                            ${mainTopicsList.map(t => `<option value="${t}">${t}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="text-xs font-bold text-[#4F46E5] bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100 whitespace-nowrap" id="table-total-count">แสดง 0 รายการ</div>
+                </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-xs sm:text-[13px] table-auto">
                     <thead>
                         <tr class="bg-[#4F46E5] text-white font-bold text-[11px] uppercase tracking-wider divide-x divide-white/10">
                             <th class="py-3.5 px-4 w-[8%] min-w-[70px] text-center whitespace-nowrap">หมวด</th>
-                            <th class="py-3.5 px-4 w-[28%] min-w-[200px] whitespace-nowrap">หัวข้อการประเมิน (Topic)</th>
-                            <th class="py-3.5 px-4 w-[28%] min-w-[200px] whitespace-nowrap">รายละเอียด OFI (OFI Title)</th>
+                            <th class="py-3.5 px-4 w-[56%] min-w-[350px] whitespace-nowrap">หัวข้อการประเมิน (Topic)</th>
                             <th class="py-3.5 px-4 w-[12%] min-w-[125px] whitespace-nowrap">ผู้รับผิดชอบ (Owner)</th>
                             <th class="py-3.5 px-4 w-[8%] min-w-[90px] text-center whitespace-nowrap">สถานะ</th>
                             <th class="py-3.5 px-4 w-[8%] min-w-[70px] text-right whitespace-nowrap">คะแนน</th>
-                            <th class="py-3.5 px-4 w-[6%] min-w-[60px] text-center whitespace-nowrap">ระดับ</th>
+                            <th class="py-3.5 px-4 w-[8%] min-w-[65px] text-center whitespace-nowrap">ระดับ</th>
                         </tr>
                     </thead>
                     <tbody id="table-ofi-list-body" class="divide-y divide-slate-200/60 bg-white/50"></tbody>
@@ -236,6 +256,12 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
             if (currentFilters.year) {
                 if (getRecordYear(r) !== currentFilters.year) return false;
             }
+            if (currentFilters.topicGroup) {
+                const topicName = getRecordTopicName(r);
+                const match = topicName.match(/^(\d+)/);
+                const recordGroup = match ? `ข้อ ${match[1]}` : 'อื่นๆ';
+                if (recordGroup !== currentFilters.topicGroup) return false;
+            }
             if (currentFilters.search) {
                 const searchQ = currentFilters.search.toLowerCase();
                 const titleMatch = getRecordTitle(r).toLowerCase().includes(searchQ);
@@ -300,17 +326,12 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
             return;
         }
 
-        const totalPages = Math.ceil(total / tableItemsPerPage);
-        if (tablePage > totalPages) tablePage = totalPages;
-        const startIndex = (tablePage - 1) * tableItemsPerPage;
-        const endIndex = startIndex + tableItemsPerPage;
-        const currentOfis = filteredRecords.slice(startIndex, endIndex);
+        const currentOfis = filteredRecords.slice(0, 5);
 
         tableBody.innerHTML = currentOfis.map(o => {
             const rId = o.id || 'N/A';
             const rMod = getRecordModule(o) || '-';
             const rTopic = getRecordTopicName(o) || 'ไม่ระบุหัวข้อประเมิน';
-            const rTitle = getRecordTitle(o) || 'ไม่ระบุรายละเอียด';
             const rOwner = getRecordOwnerName(o) || 'ไม่ระบุผู้ดูแล';
             const rScore = getRecordScore(o).toFixed(4);
             const rLvl = o.ofiLevel || '-';
@@ -333,8 +354,7 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
             return `
                 <tr class="hover:bg-indigo-50/40 transition-colors group cursor-pointer animate-row-enter" data-id="${rId}">
                     <td class="py-3 px-4 font-bold text-slate-700 text-center whitespace-nowrap">${rMod}</td>
-                    <td class="py-3 px-4 text-slate-600 max-w-[240px] lg:max-w-[340px] xl:max-w-[440px] truncate" title="${rTopic}">${rTopic}</td>
-                    <td class="py-3 px-4 font-semibold text-slate-800 max-w-[260px] lg:max-w-[380px] xl:max-w-[500px] truncate" title="${rTitle}">${rTitle}</td>
+                    <td class="py-3 px-4 text-slate-600 max-w-[400px] lg:max-w-[600px] xl:max-w-[800px] truncate" title="${rTopic}">${rTopic}</td>
                     <td class="py-3 px-4 text-slate-500 font-medium whitespace-nowrap">${rOwner}</td>
                     <td class="py-3 px-4 text-center">
                         <span class="px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap ${badgeClass}">${badgeText}</span>
@@ -345,116 +365,195 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
             `;
         }).join('');
 
-        // 6. วาด Pagination ของตาราง
-        if (totalPages <= 1) {
-            paginationWrapper.innerHTML = '';
-        } else {
-            const startItem = startIndex + 1;
-            const endItem = Math.min(endIndex, total);
-            let pagesHtml = '';
+        // Render Popup Button instead of Pagination
+        paginationWrapper.innerHTML = `
+            <div class="flex items-center justify-between">
+                <p class="text-xs text-slate-500 font-medium">แสดงตัวอย่าง <span class="font-bold text-slate-700">${Math.min(5, total)}</span> จากทั้งหมด <span class="font-bold text-slate-700">${total}</span> รายการ</p>
+                <button id="btn-open-ofi-popup" class="px-4 py-2 bg-[#4F46E5] hover:bg-[#3f38c2] text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-1.5 cursor-pointer">
+                    🔎 แสดงแผนงาน OFI ทั้งหมด (Scrollable Popup)
+                </button>
+            </div>
+        `;
 
-            for (let i = 1; i <= totalPages; i++) {
-                if (i === tablePage) {
-                    pagesHtml += `<button data-page="${i}" class="btn-table-page px-2.5 py-1 text-xs font-bold rounded-lg bg-[#4F46E5] text-white shadow-sm">${i}</button>`;
-                } else {
-                    pagesHtml += `<button data-page="${i}" class="btn-table-page px-2.5 py-1 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition">${i}</button>`;
-                }
-            }
+        const showOfisPopup = () => {
+            let localFilters = {
+                module: '',
+                topicGroup: filterTopicGroup.value || '', // Inherit from main page header filter
+                owner: filterOwn.value || '', // Inherit from main page owner filter
+                status: '',
+                level: ''
+            };
 
-            paginationWrapper.innerHTML = `
-                <div class="flex items-center justify-between">
-                    <p class="text-xs text-slate-500 font-medium">แสดง <span class="font-bold text-slate-700">${startItem}</span> ถึง <span class="font-bold text-slate-700">${endItem}</span> จากทั้งหมด <span class="font-bold text-slate-700">${total}</span> รายการ</p>
-                    <div class="flex gap-1">
-                        <button data-page="${tablePage - 1}" class="btn-table-page px-2.5 py-1 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition" ${tablePage === 1 ? 'disabled' : ''}>&laquo; ก่อนหน้า</button>
-                        ${pagesHtml}
-                        <button data-page="${tablePage + 1}" class="btn-table-page px-2.5 py-1 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition" ${tablePage === totalPages ? 'disabled' : ''}>ถัดไป &raquo;</button>
+            const renderPopupRows = () => {
+                const filtered = filteredRecords.filter(o => {
+                    if (localFilters.module && getRecordModule(o) !== localFilters.module) return false;
+                    if (localFilters.topicGroup) {
+                        const topicName = getRecordTopicName(o);
+                        const match = topicName.match(/^(\d+)/);
+                        const recordGroup = match ? `ข้อ ${match[1]}` : 'อื่นๆ';
+                        if (recordGroup !== localFilters.topicGroup) return false;
+                    }
+                    if (localFilters.owner && getRecordOwnerName(o) !== localFilters.owner) return false;
+                    if (localFilters.status) {
+                        const rStat = getRecordStatus(o);
+                        if (localFilters.status === 'done') {
+                            if (!['done', 'qualified'].includes(rStat)) return false;
+                        } else if (localFilters.status === 'progress') {
+                            if (rStat !== 'in progress' && rStat !== 'progress') return false;
+                        } else if (localFilters.status === 'delayed') {
+                            if (rStat !== 'delayed' && rStat !== 'delay') return false;
+                        } else if (localFilters.status === 'not started') {
+                            if (rStat !== 'not started') return false;
+                        }
+                    }
+                    if (localFilters.level && o.ofiLevel !== localFilters.level) return false;
+                    return true;
+                });
+
+                const tableRowsHtml = filtered.map(o => {
+                    const rId = o.id || 'N/A';
+                    const rMod = getRecordModule(o) || '-';
+                    const rTopic = getRecordTopicName(o) || 'ไม่ระบุหัวข้อประเมิน';
+                    const rOwner = getRecordOwnerName(o) || 'ไม่ระบุผู้ดูแล';
+                    const rScore = getRecordScore(o).toFixed(4);
+                    const rLvl = o.ofiLevel || '-';
+                    const rStat = getRecordStatus(o);
+
+                    let badgeClass = 'bg-slate-100 text-slate-700';
+                    let badgeText = o.overallStatus || 'Not started';
+                    
+                    if (['done', 'qualified'].includes(rStat)) {
+                        badgeClass = 'bg-emerald-50 text-emerald-700 border border-emerald-100';
+                        badgeText = 'Done';
+                    } else if (rStat === 'in progress' || rStat === 'progress') {
+                        badgeClass = 'bg-amber-50 text-amber-700 border border-amber-100';
+                        badgeText = 'In Progress';
+                    } else if (rStat === 'delayed' || rStat === 'delay') {
+                        badgeClass = 'bg-rose-50 text-rose-700 border border-rose-100';
+                        badgeText = 'Delayed';
+                    }
+
+                    return `
+                        <tr class="hover:bg-indigo-50/40 transition-colors group cursor-pointer border-b border-slate-100" data-id="${rId}">
+                            <td class="py-3 px-4 font-bold text-slate-700 text-center whitespace-nowrap">${rMod}</td>
+                            <td class="py-3 px-4 text-slate-600 max-w-[400px] lg:max-w-[600px] xl:max-w-[800px] truncate" title="${rTopic}">${rTopic}</td>
+                            <td class="py-3 px-4 text-slate-500 font-medium whitespace-nowrap">${rOwner}</td>
+                            <td class="py-3 px-4 text-center">
+                                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap ${badgeClass}">${badgeText}</span>
+                            </td>
+                            <td class="py-3 px-4 text-right font-mono font-bold text-slate-600 whitespace-nowrap">${rScore}</td>
+                            <td class="py-3 px-4 text-center font-bold text-[#4F46E5] whitespace-nowrap">${rLvl}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                const tbody = document.getElementById('popup-table-body');
+                if (tbody) tbody.innerHTML = tableRowsHtml || `<tr><td colspan="6" class="py-8 text-center text-slate-400 font-medium">ไม่พบแผนงาน OFI ตรงกับตัวกรองของคุณ</td></tr>`;
+
+                const countEl = document.getElementById('popup-total-count-badge');
+                if (countEl) countEl.innerText = `แสดง ${filtered.length} รายการ`;
+            };
+
+            const popupContentHtml = `
+                <div class="space-y-4">
+                    <!-- Popup Filter Bar -->
+                    <div class="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/60 flex flex-wrap gap-3 items-center">
+                        <span class="text-xs font-bold text-slate-500 flex items-center gap-1">🔎 ตัวกรองด่วน:</span>
+                        <select id="popup-filter-module" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400">
+                            <option value="">หมวด: ทั้งหมด</option>
+                            ${modulesList.map(m => `<option value="${m}">${m}</option>`).join('')}
+                        </select>
+                        <select id="popup-filter-topic-group" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400">
+                            <option value="">หัวข้อใหญ่: ทั้งหมด</option>
+                            ${mainTopicsList.map(t => `<option value="${t}" ${t === localFilters.topicGroup ? 'selected' : ''}>${t}</option>`).join('')}
+                        </select>
+                        <select id="popup-filter-owner" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400">
+                            <option value="">ผู้ดูแล: ทั้งหมด</option>
+                            ${ownersList.map(o => `<option value="${o}" ${o === localFilters.owner ? 'selected' : ''}>${o}</option>`).join('')}
+                        </select>
+                        <select id="popup-filter-status" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400">
+                            <option value="">สถานะ: ทั้งหมด</option>
+                            <option value="progress">In Progress</option>
+                            <option value="done">Done</option>
+                            <option value="delayed">Delayed</option>
+                            <option value="not started">Not Started</option>
+                        </select>
+                        <select id="popup-filter-level" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400">
+                            <option value="">ระดับ: ทั้งหมด</option>
+                            ${levelsList.map(l => `<option value="${l}">L${l}</option>`).join('')}
+                        </select>
+                        <div class="ml-auto text-xs font-bold text-[#4F46E5] bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100 whitespace-nowrap" id="popup-total-count-badge">แสดง ${filteredRecords.length} รายการ</div>
+                    </div>
+
+                    <div class="overflow-hidden border border-slate-200/80 rounded-2xl shadow-sm bg-white">
+                        <div class="overflow-x-auto max-h-[72vh] overflow-y-auto" style="overscroll-behavior: contain;">
+                            <table class="w-full text-left border-collapse text-xs sm:text-[13px] table-auto">
+                                <thead>
+                                    <tr class="bg-[#4F46E5] text-white font-bold text-[11px] uppercase tracking-wider divide-x divide-white/10 sticky top-0 z-10">
+                                        <th class="py-3.5 px-4 w-[8%] text-center whitespace-nowrap">หมวด</th>
+                                        <th class="py-3.5 px-4 w-[56%] whitespace-nowrap">หัวข้อการประเมิน (Topic)</th>
+                                        <th class="py-3.5 px-4 w-[12%] whitespace-nowrap">ผู้รับผิดชอบ (Owner)</th>
+                                        <th class="py-3.5 px-4 w-[8%] text-center whitespace-nowrap">สถานะ</th>
+                                        <th class="py-3.5 px-4 w-[8%] text-right whitespace-nowrap">คะแนน</th>
+                                        <th class="py-3.5 px-4 w-[8%] text-center whitespace-nowrap">ระดับ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="popup-table-body" class="divide-y divide-slate-100 bg-white">
+                                    <!-- rows injected dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             `;
-        }
-    };
 
-    // --- ลงทะเบียน Event Listeners สำหรับตัวกรองข้อมูล ---
-    const filterMod = document.getElementById('filter-module');
-    const filterOwn = document.getElementById('filter-owner');
-    const filterStat = document.getElementById('filter-status');
-    const filterLvl = document.getElementById('filter-level');
-    const filterYr = document.getElementById('filter-year');
-    const filterSrc = document.getElementById('filter-search');
-    const resetBtn = document.getElementById('filter-reset-btn');
+            showSharedGlassModal("ตารางรายการแผนงาน OFI ในระบบ", `จำนวนทั้งหมด ${total} รายการ`, popupContentHtml, 'full');
 
-    const handleFilterChange = () => {
-        currentFilters.modules = filterMod.value ? [filterMod.value] : [];
-        currentFilters.owners = filterOwn.value ? [filterOwn.value] : [];
-        currentFilters.status = filterStat.value;
-        currentFilters.levels = filterLvl.value ? [filterLvl.value] : [];
-        currentFilters.year = filterYr.value;
-        currentFilters.search = filterSrc.value.trim();
-        tablePage = 1;
-        updateDashboard();
-    };
+            renderPopupRows();
 
-    const debounce = (func, delay) => {
-        let timer;
-        return (...args) => {
-            clearTimeout(timer);
-            timer = setTimeout(() => func.apply(this, args), delay);
+            const pMod = document.getElementById('popup-filter-module');
+            const pTopic = document.getElementById('popup-filter-topic-group');
+            const pOwn = document.getElementById('popup-filter-owner');
+            const pStat = document.getElementById('popup-filter-status');
+            const pLvl = document.getElementById('popup-filter-level');
+
+            const handleLocalFilterChange = () => {
+                localFilters.module = pMod.value;
+                localFilters.topicGroup = pTopic.value;
+                localFilters.owner = pOwn.value;
+                localFilters.status = pStat.value;
+                localFilters.level = pLvl.value ? parseInt(pLvl.value) : '';
+                renderPopupRows();
+            };
+
+            pMod.addEventListener('change', handleLocalFilterChange);
+            pTopic.addEventListener('change', handleLocalFilterChange);
+            pOwn.addEventListener('change', handleLocalFilterChange);
+            pStat.addEventListener('change', handleLocalFilterChange);
+            pLvl.addEventListener('change', handleLocalFilterChange);
+
+            const popupTableBody = document.getElementById('popup-table-body');
+            if (popupTableBody) {
+                popupTableBody.addEventListener('click', (e) => {
+                    const row = e.target.closest('tr');
+                    if (!row) return;
+                    const id = row.getAttribute('data-id');
+                    if (!id || id === 'N/A') return;
+                    const record = rawRecords.find(r => r.id === id);
+                    if (!record) return;
+                    showOfiDetailModal(record);
+                });
+            }
         };
+
+        const btnOpen = document.getElementById('btn-open-ofi-popup');
+        if (btnOpen) {
+            btnOpen.addEventListener('click', showOfisPopup);
+        }
     };
 
-    const handleSearchInput = debounce((e) => {
-        currentFilters.search = e.target.value.trim();
-        tablePage = 1;
-        updateDashboard();
-    }, 200);
-
-    filterMod.addEventListener('change', handleFilterChange);
-    filterOwn.addEventListener('change', handleFilterChange);
-    filterStat.addEventListener('change', handleFilterChange);
-    filterLvl.addEventListener('change', handleFilterChange);
-    filterYr.addEventListener('change', handleFilterChange);
-    filterSrc.addEventListener('input', handleSearchInput);
-
-    resetBtn.addEventListener('click', () => {
-        filterMod.value = '';
-        filterOwn.value = ownerName;
-        filterStat.value = '';
-        filterLvl.value = '';
-        filterYr.value = '';
-        filterSrc.value = '';
-        currentFilters = { modules: [], owners: ownerName ? [ownerName] : [], status: '', levels: [], search: '', year: '' };
-        tablePage = 1;
-        updateDashboard();
-        tableBody.querySelectorAll('tr').forEach(r => {
-            r.classList.remove('active-selected-row');
-        });
-    });
-
-    paginationWrapper.addEventListener('click', (e) => {
-        const btn = e.target.closest('.btn-table-page');
-        if (btn && !btn.disabled) {
-            tablePage = parseInt(btn.getAttribute('data-page'));
-            updateDashboard();
-            tableBody.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-    });
-
-    // --- ลงทะเบียน Event สำหรับคลิกแถวตารางเพื่อดึงรายละเอียดโมดอล (Modal Drilldown) ---
-    tableBody.addEventListener('click', (e) => {
-        const row = e.target.closest('tr');
-        if (!row) return;
-        const id = row.getAttribute('data-id');
-        if (!id || id === 'N/A') return;
-
-        const record = rawRecords.find(r => r.id === id);
-        if (!record) return;
-
-        // 🌟 เพิ่มไฮไลท์บรรทัดของข้อมูลที่ถูกเลือก (Row Highlight)
-        tableBody.querySelectorAll('tr').forEach(r => {
-            r.classList.remove('active-selected-row');
-        });
-        row.classList.add('active-selected-row');
-
+    const showOfiDetailModal = (record, row = null) => {
+        const id = record.id || 'N/A';
         const phasesObj = record.phases || {};
         const phasesList = [
             { key: 'phase-plan', label: '1. แผนปรับปรุง' },
@@ -543,10 +642,88 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
             </div>`;
 
         const onClose = () => {
-            row.classList.remove('active-selected-row');
+            if (row) row.classList.remove('active-selected-row');
         };
 
         showSharedGlassModal(`รายละเอียดแผนงาน OFI: ${id}`, `จากแหล่งข้อมูล: ${record._source_file || 'คลังข้อมูลกลาง'}`, modalContent, 'md', onClose);
+    };
+
+    // --- ลงทะเบียน Event Listeners สำหรับตัวกรองข้อมูล ---
+    const filterMod = document.getElementById('filter-module');
+    const filterTopicGroup = document.getElementById('filter-topic-group');
+    const filterOwn = document.getElementById('filter-owner');
+    const filterStat = document.getElementById('filter-status');
+    const filterLvl = document.getElementById('filter-level');
+    const filterYr = document.getElementById('filter-year');
+    const filterSrc = document.getElementById('filter-search');
+    const resetBtn = document.getElementById('filter-reset-btn');
+
+    const handleFilterChange = () => {
+        currentFilters.modules = filterMod.value ? [filterMod.value] : [];
+        currentFilters.topicGroup = filterTopicGroup.value;
+        currentFilters.owners = filterOwn.value ? [filterOwn.value] : [];
+        currentFilters.status = filterStat.value;
+        currentFilters.levels = filterLvl.value ? [filterLvl.value] : [];
+        currentFilters.year = filterYr.value;
+        currentFilters.search = filterSrc.value.trim();
+        tablePage = 1;
+        updateDashboard();
+    };
+
+    const debounce = (func, delay) => {
+        let timer;
+        return (...args) => {
+            clearTimeout(timer);
+            timer = setTimeout(() => func.apply(this, args), delay);
+        };
+    };
+
+    const handleSearchInput = debounce((e) => {
+        currentFilters.search = e.target.value.trim();
+        tablePage = 1;
+        updateDashboard();
+    }, 200);
+
+    filterMod.addEventListener('change', handleFilterChange);
+    filterTopicGroup.addEventListener('change', handleFilterChange);
+    filterOwn.addEventListener('change', handleFilterChange);
+    filterStat.addEventListener('change', handleFilterChange);
+    filterLvl.addEventListener('change', handleFilterChange);
+    filterYr.addEventListener('change', handleFilterChange);
+    filterSrc.addEventListener('input', handleSearchInput);
+
+    resetBtn.addEventListener('click', () => {
+        filterMod.value = '';
+        filterTopicGroup.value = '';
+        filterOwn.value = ownerName;
+        filterStat.value = '';
+        filterLvl.value = '';
+        filterYr.value = '';
+        filterSrc.value = '';
+        currentFilters = { modules: [], owners: ownerName ? [ownerName] : [], status: '', levels: [], search: '', year: '', topicGroup: '' };
+        tablePage = 1;
+        updateDashboard();
+        tableBody.querySelectorAll('tr').forEach(r => {
+            r.classList.remove('active-selected-row');
+        });
+    });
+
+    // --- ลงทะเบียน Event สำหรับคลิกแถวตารางเพื่อดึงรายละเอียดโมดอล (Modal Drilldown) ---
+    tableBody.addEventListener('click', (e) => {
+        const row = e.target.closest('tr');
+        if (!row) return;
+        const id = row.getAttribute('data-id');
+        if (!id || id === 'N/A') return;
+
+        const record = rawRecords.find(r => r.id === id);
+        if (!record) return;
+
+        tableBody.querySelectorAll('tr').forEach(r => {
+            r.classList.remove('active-selected-row');
+        });
+        row.classList.add('active-selected-row');
+
+        showOfiDetailModal(record, row);
     });
 
     // --- ระบบ Click เพื่อขยายขนาดกราฟ (Accessibility Zoom) ---

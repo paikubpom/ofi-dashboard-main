@@ -1,12 +1,16 @@
 export function showSharedGlassModal(title, subtitle, contentHtml, size = 'md', onClose = null) {
     let widthClass = 'max-w-2xl';
+    let bodyOverflowClass = 'overflow-y-auto';
     if (size === 'lg') widthClass = 'max-w-4xl';
     else if (size === 'xl') widthClass = 'max-w-6xl';
-    else if (size === 'full') widthClass = 'max-w-[92vw]';
+    else if (size === 'full') {
+        widthClass = 'max-w-[92vw]';
+        bodyOverflowClass = 'overflow-hidden'; // Disable modal body scroll for full-size tables to prevent nested scrollbars
+    }
 
     const modalHtml = `
-        <div id="global-modal-overlay" class="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-300 opacity-0">
-            <div class="glass-card ${widthClass} w-full p-6 rounded-3xl shadow-2xl flex flex-col max-h-[90vh] transform scale-95 transition-all duration-300">
+        <div id="global-modal-overlay" class="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-300 opacity-0" style="overscroll-behavior: contain;">
+            <div class="glass-card ${widthClass} w-full p-6 rounded-3xl shadow-2xl flex flex-col max-h-[90vh] transform scale-95 transition-all duration-300" style="overscroll-behavior: contain;">
                 <div class="flex justify-between items-center border-b border-slate-200/40 pb-4 mb-4">
                     <div>
                         <h4 class="text-base font-bold text-slate-800">${title}</h4>
@@ -16,7 +20,7 @@ export function showSharedGlassModal(title, subtitle, contentHtml, size = 'md', 
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
-                <div class="flex-1 overflow-y-auto pr-1">
+                <div class="flex-1 ${bodyOverflowClass} pr-1">
                     ${contentHtml}
                 </div>
             </div>
@@ -30,6 +34,9 @@ export function showSharedGlassModal(title, subtitle, contentHtml, size = 'md', 
         }
         oldModal.remove();
     }
+
+    // Lock body scroll
+    document.body.style.overflow = 'hidden';
 
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     const overlay = document.getElementById('global-modal-overlay');
@@ -48,6 +55,8 @@ export function showSharedGlassModal(title, subtitle, contentHtml, size = 'md', 
     const closeModal = () => {
         overlay.classList.add('opacity-0');
         card.classList.add('scale-95');
+        // Unlock body scroll
+        document.body.style.overflow = '';
         if (typeof onClose === 'function') onClose();
         setTimeout(() => overlay.remove(), 250);
     };
