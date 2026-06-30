@@ -8,11 +8,13 @@
     html {
         overscroll-behavior: none;
         overflow-x: clip;
+        overflow-anchor: none;
     }
     body {
         font-family: 'Inter', 'Noto Sans Thai', system-ui, -apple-system, sans-serif;
         overscroll-behavior: none;
         overflow-x: clip;
+        overflow-anchor: none;
     }
 }
 
@@ -110,4 +112,157 @@
 /* Maintain proper contrast for the element module tag */
 .active-selected-row td:nth-child(2) {
     color: #00508F !important;
+}
+
+/* ==========================================================================
+   Sticky Header & Filter Shrinking System (UX/UI Optimized)
+   ========================================================================== */
+
+/* 1. Header Sticky & Shrink */
+#global-header {
+    position: sticky;
+    top: 1rem;
+    z-index: 100;
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.page-scrolled #global-header {
+    top: 0.5rem;
+}
+
+#global-header header {
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.page-scrolled #global-header header {
+    padding-top: 0.65rem !important;
+    padding-bottom: 0.65rem !important;
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+    border-radius: 1.25rem !important;
+    background: rgba(255, 255, 255, 0.88) !important;
+    backdrop-filter: blur(20px) saturate(120%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(120%) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 80, 143, 0.08), 0 8px 10px -6px rgba(0, 80, 143, 0.08) !important;
+}
+
+.page-scrolled #global-header img {
+    height: 2.75rem !important; /* Shrink PTT logo */
+}
+
+.page-scrolled #global-header h1 {
+    font-size: 1.05rem !important; /* Shrink Title Text */
+}
+
+.page-scrolled #global-header .sm\:block.w-\[1\.5px\] {
+    height: 1.5rem !important; /* Shrink Divider */
+}
+
+/* 2. Filter Bar Sticky & Shrink */
+#sticky-filter-wrapper {
+    position: sticky;
+    top: 7.75rem; /* Sits right below the expanded header */
+    z-index: 90;
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.page-scrolled #sticky-filter-wrapper {
+    top: 4.6rem; /* Move up to dock below shrunken header */
+}
+
+#sticky-filter-wrapper > .glass-card {
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.page-scrolled #sticky-filter-wrapper > .glass-card {
+    border-radius: 1.25rem !important;
+    background: rgba(255, 255, 255, 0.92) !important;
+    backdrop-filter: blur(20px) saturate(120%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(120%) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 80, 143, 0.08) !important;
+}
+
+/* Smooth collapse of the blue filter header bar */
+#sticky-filter-wrapper .filter-header-bar {
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    max-height: 100px;
+    opacity: 1;
+}
+
+.page-scrolled #sticky-filter-wrapper .filter-header-bar {
+    max-height: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    opacity: 0 !important;
+    overflow: hidden;
+}
+
+/* Compact filter body padding */
+#sticky-filter-wrapper .filter-content-body {
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.page-scrolled #sticky-filter-wrapper .filter-content-body {
+    padding: 0.75rem 1.25rem !important;
+}
+
+/* Shrink grid spacing */
+#sticky-filter-wrapper .filter-grid-layout {
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.page-scrolled #sticky-filter-wrapper .filter-grid-layout {
+    gap: 0.5rem !important;
+}
+
+/* Smooth transition of labels to save vertical height but keep them visible as tiny sub-headers */
+#sticky-filter-wrapper .filter-grid-layout label {
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    max-height: 30px;
+    opacity: 1;
+    overflow: hidden;
+}
+
+.page-scrolled #sticky-filter-wrapper .filter-grid-layout label {
+    max-height: 14px !important;
+    opacity: 0.95 !important;
+    margin-bottom: 0.15rem !important;
+    font-size: 9px !important;
+    color: #00508F !important; /* PTT Blue contrast */
+    font-weight: 800 !important;
+    letter-spacing: 0.025em;
+}
+
+/* Make selects and inputs compact */
+#sticky-filter-wrapper .filter-grid-layout select,
+#sticky-filter-wrapper .filter-grid-layout input {
+    transition: all 0.3s ease;
+}
+
+.page-scrolled #sticky-filter-wrapper .filter-grid-layout select,
+.page-scrolled #sticky-filter-wrapper .filter-grid-layout input {
+    padding-top: 0.35rem !important;
+    padding-bottom: 0.35rem !important;
+    font-size: 11px !important;
+    border-radius: 0.65rem !important;
+}
+
+/* Compact Search and Reset Buttons Row */
+#sticky-filter-wrapper .filter-actions-row {
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.page-scrolled #sticky-filter-wrapper .filter-actions-row {
+    margin-top: 0.5rem !important;
+    padding-top: 0.5rem !important;
+}
+
+.page-scrolled #sticky-filter-wrapper .filter-actions-row input,
+.page-scrolled #sticky-filter-wrapper .filter-actions-row button {
+    padding-top: 0.35rem !important;
+    padding-bottom: 0.35rem !important;
+    font-size: 11px !important;
+    border-radius: 0.65rem !important;
 }

@@ -62,8 +62,8 @@ export function initGlobalPdfExport(roleName) {
             loader.innerHTML = `
                 <div class="p-5 bg-slate-900 rounded-2xl border border-slate-800 flex flex-col items-center gap-4 shadow-2xl text-center max-w-xs mx-4">
                     <div class="w-9 h-9 border-4 border-[#00508F] border-t-transparent rounded-full animate-spin"></div>
-                    <div><h5 class="text-sm font-bold">กำลังสร้างไฟล์ ${fmt.toUpperCase()}</h5>
-                    <p class="text-[10px] text-slate-400 mt-1">กำลังเรนเดอร์กราฟและภาพ กรุณารอสักครู่...</p>
+                    <div><h5 class="text-sm font-bold">กำลังโหลดไฟล์ ${fmt.toUpperCase()}</h5>
+                    <p class="text-[10px] text-slate-400 mt-1">กรุณารอสักครู่...</p>
                     </div>
                 </div>`;
             document.body.appendChild(loader);

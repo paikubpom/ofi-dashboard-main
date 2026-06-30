@@ -67,64 +67,65 @@ export function renderAuditorView(appInstance, chartSettings = {}, currentRole =
         return numA - numB;
     });
 
-    // ประกอบโครงสร้าง HTML พืนฐาน (ฟิลเตอร์ + กริดกราฟ + ตารางข้อมูลดิบ)
     appInstance.contentDiv.innerHTML = `
-        <div id="kpi-cards-wrapper">
-            ${appInstance.getKpiHtml()}
+        <!-- 2. แถบตัวกรองข้อมูลอัจฉริยะ (Interactive Filters) -->
+        <div id="sticky-filter-wrapper" class="mb-6">
+            <div class="glass-card rounded-3xl border border-slate-200 shadow-sm overflow-hidden animate-fade-in-up">
+                <div class="bg-[#00508F] px-5 py-3.5 flex items-center gap-2 filter-header-bar">
+                    <span class="text-white text-lg">🔍</span>
+                    <span class="text-white font-bold text-sm tracking-wide">กรองข้อมูล (Filters)</span>
+                </div>
+                <div class="p-5 space-y-4 filter-content-body">
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 filter-grid-layout">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">หมวด (Module)</label>
+                            <select id="filter-module" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                                <option value="">ทั้งหมด (All)</option>
+                                ${modulesList.map(m => `<option value="${m}">${m}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">ผู้ดูแล (Owner)</label>
+                            <select id="filter-owner" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                                <option value="">ทั้งหมด (All)</option>
+                                ${ownersList.map(o => `<option value="${o}">${o}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">สถานะ (Status)</label>
+                            <select id="filter-status" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                                <option value="">ทั้งหมด (All)</option>
+                                <option value="progress">In Progress</option>
+                                <option value="done">Done / Qualified</option>
+                                <option value="delayed">Delayed</option>
+                                <option value="not started">Not Started</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">ระดับความยาก (Level)</label>
+                            <select id="filter-level" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                                <option value="">ทั้งหมด (All)</option>
+                                ${levelsList.map(l => `<option value="${l}">L${l}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">ปีประเมิน (Year)</label>
+                            <select id="filter-year" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                                <option value="">ทั้งหมด (All)</option>
+                                ${yearsList.map(y => `<option value="${y}">${y}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 filter-actions-row">
+                        <input type="text" id="filter-search" placeholder="🔎 ค้นหาหัวข้อ, รายละเอียด OFI, หรือรหัส..." class="w-full px-4 py-2.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                        <button id="filter-reset-btn" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 text-xs font-bold rounded-xl transition-all border border-slate-200">รีเซ็ต</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- 2. แถบตัวกรองข้อมูลอัจฉริยะ (Interactive Filters) -->
-        <div class="glass-card rounded-3xl border border-slate-200 shadow-sm mb-6 overflow-hidden animate-fade-in-up">
-            <div class="bg-[#00508F] px-5 py-3.5 flex items-center gap-2">
-                <span class="text-white text-lg">🔍</span>
-                <span class="text-white font-bold text-sm tracking-wide">กรองข้อมูล (Filters)</span>
-            </div>
-            <div class="p-5 space-y-4">
-                <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">หมวด (Module)</label>
-                        <select id="filter-module" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
-                            <option value="">ทั้งหมด (All)</option>
-                            ${modulesList.map(m => `<option value="${m}">${m}</option>`).join('')}
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">ผู้ดูแล (Owner)</label>
-                        <select id="filter-owner" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
-                            <option value="">ทั้งหมด (All)</option>
-                            ${ownersList.map(o => `<option value="${o}">${o}</option>`).join('')}
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">สถานะ (Status)</label>
-                        <select id="filter-status" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
-                            <option value="">ทั้งหมด (All)</option>
-                            <option value="progress">In Progress</option>
-                            <option value="done">Done / Qualified</option>
-                            <option value="delayed">Delayed</option>
-                            <option value="not started">Not Started</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">ระดับความยาก (Level)</label>
-                        <select id="filter-level" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
-                            <option value="">ทั้งหมด (All)</option>
-                            ${levelsList.map(l => `<option value="${l}">L${l}</option>`).join('')}
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">ปีประเมิน (Year)</label>
-                        <select id="filter-year" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
-                            <option value="">ทั้งหมด (All)</option>
-                            ${yearsList.map(y => `<option value="${y}">${y}</option>`).join('')}
-                        </select>
-                    </div>
-                </div>
-                <div class="flex gap-2">
-                    <input type="text" id="filter-search" placeholder="🔎 ค้นหาหัวข้อ, รายละเอียด OFI, หรือรหัส..." class="w-full px-4 py-2.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
-                    <button id="filter-reset-btn" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 text-xs font-bold rounded-xl transition-all border border-slate-200">รีเซ็ต</button>
-                </div>
-            </div>
+        <div id="kpi-cards-wrapper" class="mb-6">
+            ${appInstance.getKpiHtml()}
         </div>
 
         <!-- 3. พื้นที่จัดแสดงกราฟ (Grid) -->
@@ -419,15 +420,24 @@ export function renderAuditorView(appInstance, chartSettings = {}, currentRole =
         <button class="btn-expand-chart p-1 text-slate-400 hover:text-blue-600 hover:bg-slate-50 rounded-lg transition" data-chart-id="chart-defect-source" title="ขยายกราฟ (Zoom Chart)">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4m12 4V4h-4M4 16v4h4m12-4v4h-4" /></svg>
                         </button>`;
+        let rowsHtml = [];
         if (total === 0) {
-            tableBody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 font-medium">ไม่พบแผนงาน OFI ตรงกับตัวกรองของคุณ</td></tr>`;
-            paginationWrapper.innerHTML = '';
+            rowsHtml.push(`<tr style="height: 53px;"><td colspan="6" class="py-4 text-center text-slate-400 font-medium">ไม่พบแผนงาน OFI ตรงกับตัวกรองของคุณ</td></tr>`);
+            for (let i = 1; i < 5; i++) {
+                rowsHtml.push(`<tr style="height: 53px;"><td colspan="6" class="py-4">&nbsp;</td></tr>`);
+            }
+            tableBody.innerHTML = rowsHtml.join('');
+            paginationWrapper.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <p class="text-xs text-slate-500 font-medium">แสดงตัวอย่าง <span class="font-bold text-slate-700">0</span> จากทั้งหมด <span class="font-bold text-slate-700">0</span> รายการ</p>
+                </div>
+            `;
             return;
         }
 
         const currentOfis = filteredRecords.slice(0, 5);
 
-        tableBody.innerHTML = currentOfis.map(o => {
+        rowsHtml = currentOfis.map(o => {
             const rId = o.id || 'N/A';
             const rMod = getRecordModule(o) || '-';
             const rTopic = getRecordTopicName(o) || 'ไม่ระบุหัวข้อประเมิน';
@@ -451,7 +461,7 @@ export function renderAuditorView(appInstance, chartSettings = {}, currentRole =
             }
 
             return `
-                <tr class="hover:bg-blue-50/40 transition-colors group cursor-pointer animate-row-enter" data-id="${rId}">
+                <tr class="hover:bg-blue-50/40 transition-colors group cursor-pointer animate-row-enter" data-id="${rId}" style="height: 53px;">
                     <td class="py-3 pl-6 pr-4 font-bold text-slate-700 text-center whitespace-nowrap">${rMod}</td>
                     <td class="py-3 px-4 text-slate-600 max-w-[400px] lg:max-w-[600px] xl:max-w-[800px] truncate" title="${rTopic}">${rTopic}</td>
                     <td class="py-3 px-4 text-slate-500 font-medium whitespace-nowrap">${rOwner}</td>
@@ -462,7 +472,14 @@ export function renderAuditorView(appInstance, chartSettings = {}, currentRole =
                     <td class="py-3 pl-4 pr-6 text-center font-bold text-[#00508F] whitespace-nowrap">${rLvl}</td>
                 </tr>
             `;
-        }).join('');
+        });
+
+        // Pad to exactly 5 rows
+        while (rowsHtml.length < 5) {
+            rowsHtml.push(`<tr style="height: 53px;"><td colspan="6" class="py-4">&nbsp;</td></tr>`);
+        }
+
+        tableBody.innerHTML = rowsHtml.join('');
 
         // Render Popup Button instead of Pagination
         paginationWrapper.innerHTML = `
@@ -506,7 +523,7 @@ export function renderAuditorView(appInstance, chartSettings = {}, currentRole =
                     return true;
                 });
 
-                const tableRowsHtml = filtered.map(o => {
+                const rowsHtml = filtered.map(o => {
                     const rId = o.id || 'N/A';
                     const rMod = getRecordModule(o) || '-';
                     const rTopic = getRecordTopicName(o) || 'ไม่ระบุหัวข้อประเมิน';
@@ -530,7 +547,7 @@ export function renderAuditorView(appInstance, chartSettings = {}, currentRole =
                     }
 
                     return `
-                        <tr class="hover:bg-blue-50/40 transition-colors group cursor-pointer border-b border-slate-100" data-id="${rId}">
+                        <tr class="hover:bg-blue-50/40 transition-colors group cursor-pointer border-b border-slate-100" data-id="${rId}" style="height: 53px;">
                             <td class="py-3 pl-6 pr-4 font-bold text-slate-700 text-center whitespace-nowrap">${rMod}</td>
                             <td class="py-3 px-4 text-slate-600 max-w-[400px] lg:max-w-[600px] xl:max-w-[800px] truncate" title="${rTopic}">${rTopic}</td>
                             <td class="py-3 px-4 text-slate-500 font-medium whitespace-nowrap">${rOwner}</td>
@@ -541,10 +558,18 @@ export function renderAuditorView(appInstance, chartSettings = {}, currentRole =
                             <td class="py-3 pl-4 pr-6 text-center font-bold text-[#00508F] whitespace-nowrap">${rLvl}</td>
                         </tr>
                     `;
-                }).join('');
+                });
+
+                if (rowsHtml.length === 0) {
+                    rowsHtml.push(`<tr style="height: 53px;"><td colspan="6" class="py-4 text-center text-slate-400 font-medium">ไม่พบแผนงาน OFI ตรงกับตัวกรองของคุณ</td></tr>`);
+                }
+
+                while (rowsHtml.length < 5) {
+                    rowsHtml.push(`<tr style="height: 53px;"><td colspan="6" class="py-4">&nbsp;</td></tr>`);
+                }
 
                 const tbody = document.getElementById('popup-table-body');
-                if (tbody) tbody.innerHTML = tableRowsHtml || `<tr><td colspan="6" class="py-8 text-center text-slate-400 font-medium">ไม่พบแผนงาน OFI ตรงกับตัวกรองของคุณ</td></tr>`;
+                if (tbody) tbody.innerHTML = rowsHtml.join('');
 
                 const countEl = document.getElementById('popup-total-count-badge');
                 if (countEl) countEl.innerText = `แสดง ${filtered.length} รายการ`;

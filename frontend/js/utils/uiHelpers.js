@@ -1014,3 +1014,18 @@ export async function initSidebar(currentRole, activeOwnerKey = '') {
         // }
     }
 }
+
+// Setup global scroll listener for sticky header and filter shrinking (with hysteresis to prevent oscillation jitter)
+if (typeof window !== 'undefined') {
+    let isScrolled = false;
+    window.addEventListener('scroll', () => {
+        const sy = window.scrollY;
+        if (!isScrolled && sy > 130) {
+            isScrolled = true;
+            document.body.classList.add('page-scrolled');
+        } else if (isScrolled && sy < 30) {
+            isScrolled = false;
+            document.body.classList.remove('page-scrolled');
+        }
+    }, { passive: true });
+}
