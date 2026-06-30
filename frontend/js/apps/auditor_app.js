@@ -68,7 +68,7 @@ class AuditorApp {
 
             const headerEl = document.getElementById('global-header');
             if (headerEl) {
-                headerEl.innerHTML = getSharedHeaderHtml('🔍 OFI Dashboard for AUDITOR', 'bg-teal-600', false, '', syncTimeStr);
+                headerEl.innerHTML = getSharedHeaderHtml('🔍 CBE Driver บอล.', 'bg-teal-600', false, '', syncTimeStr);
             }
             
             const flags = this.data.detectRedFlags(this.API_BASE_URL);
