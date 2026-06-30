@@ -263,16 +263,6 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
             `;
         }).join('');
 
-        // Render Popup Button instead of Pagination
-        paginationWrapper.innerHTML = `
-            <div class="flex items-center justify-between">
-                <p class="text-xs text-slate-500 font-medium">แสดงตัวอย่าง <span class="font-bold text-slate-700">${Math.min(5, count)}</span> จากทั้งหมด <span class="font-bold text-slate-700">${count}</span> รายการ</p>
-                <button id="btn-open-projects-popup" class="px-4 py-2 bg-[#00508F] hover:bg-[#003d70] text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-1.5 cursor-pointer">
-                    🔎 แสดงโครงการทั้งหมด (Scrollable Popup)
-                </button>
-            </div>
-        `;
-
         const showProjectsPopup = () => {
             let localFilters = {
                 source: '',

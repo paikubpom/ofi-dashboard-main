@@ -148,7 +148,7 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
                             ${mainTopicsList.map(t => `<option value="${t}">${t}</option>`).join('')}
                         </select>
                     </div>
-                    <div class="text-xs font-bold text-[#4F46E5] bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100 whitespace-nowrap" id="table-total-count">แสดง 0 รายการ</div>
+                    <button id="table-total-count" class="text-xs font-bold text-[#4F46E5] bg-indigo-50 hover:bg-indigo-100 active:scale-95 transition-all px-3 py-1.5 rounded-full border border-indigo-200/80 shadow-sm whitespace-nowrap cursor-pointer flex items-center gap-1.5 hover:shadow-md" title="คลิกเพื่อเปิดตารางขยาย (Zoom Table)">แสดง 0 รายการ 🔍 Zoom</button>
                 </div>
             </div>
             <div class="overflow-x-auto">
@@ -319,7 +319,7 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
         }
 
         // 5. จัดการเรนเดอร์ตารางรายการ
-        tableCountText.innerText = `แสดง ${total} รายการ`;
+        tableCountText.innerHTML = `<span>แสดง ${total} รายการ</span> <span class="text-indigo-600">🔍 Zoom</span>`;
         if (total === 0) {
             tableBody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 font-medium">ไม่พบแผนงาน OFI ตรงกับตัวกรองของคุณ</td></tr>`;
             paginationWrapper.innerHTML = '';
@@ -369,9 +369,6 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
         paginationWrapper.innerHTML = `
             <div class="flex items-center justify-between">
                 <p class="text-xs text-slate-500 font-medium">แสดงตัวอย่าง <span class="font-bold text-slate-700">${Math.min(5, total)}</span> จากทั้งหมด <span class="font-bold text-slate-700">${total}</span> รายการ</p>
-                <button id="btn-open-ofi-popup" class="px-4 py-2 bg-[#4F46E5] hover:bg-[#3f38c2] text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-1.5 cursor-pointer">
-                    🔎 แสดงแผนงาน OFI ทั้งหมด (Scrollable Popup)
-                </button>
             </div>
         `;
 
@@ -549,6 +546,10 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
         const btnOpen = document.getElementById('btn-open-ofi-popup');
         if (btnOpen) {
             btnOpen.addEventListener('click', showOfisPopup);
+        }
+        const badgeOpen = document.getElementById('table-total-count');
+        if (badgeOpen) {
+            badgeOpen.addEventListener('click', showOfisPopup);
         }
     };
 

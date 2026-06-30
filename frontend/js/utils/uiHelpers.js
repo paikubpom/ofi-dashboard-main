@@ -20,7 +20,7 @@ export function showSharedGlassModal(title, subtitle, contentHtml, size = 'md', 
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
-                <div class="flex-1 ${bodyOverflowClass} pr-1">
+                <div class="flex-1 ${bodyOverflowClass} pr-1" style="overscroll-behavior: contain;">
                     ${contentHtml}
                 </div>
             </div>
@@ -35,7 +35,8 @@ export function showSharedGlassModal(title, subtitle, contentHtml, size = 'md', 
         oldModal.remove();
     }
 
-    // Lock body scroll
+    // Lock scroll on both html and body to completely prevent background scroll chaining
+    document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
 
     document.body.insertAdjacentHTML('beforeend', modalHtml);
@@ -55,7 +56,8 @@ export function showSharedGlassModal(title, subtitle, contentHtml, size = 'md', 
     const closeModal = () => {
         overlay.classList.add('opacity-0');
         card.classList.add('scale-95');
-        // Unlock body scroll
+        // Unlock scroll on both html and body
+        document.documentElement.style.overflow = '';
         document.body.style.overflow = '';
         if (typeof onClose === 'function') onClose();
         setTimeout(() => overlay.remove(), 250);
@@ -360,7 +362,7 @@ function generateChartSummaryHtml(chart, title) {
 }
 
 /**
- * 🔎 ฟังก์ชันขยายขนาดกราฟสำหรับผู้สูงอายุ (Chart Accessibility Zoom Modal)
+ * 🔎 ฟังก์ชันขยายขนาดกราฟ (Chart Accessibility Zoom Modal)
  * ทำการดึงโครงสร้างกราฟเดิมมาเรนเดอร์ใหม่ในขนาดใหญ่พิเศษ พร้อมขยายตัวอักษรและข้อมูลบอกค่าคะแนนให้อ่านง่ายขึ้น
  */
 export function zoomChart(canvasId) {
