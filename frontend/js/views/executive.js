@@ -96,17 +96,17 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-xs sm:text-[13px] table-auto">
                     <thead>
-                        <tr class="bg-[#00508F] text-white font-bold text-[11px] uppercase tracking-wider divide-x divide-white/10">
-                            <th class="py-3.5 px-4 w-[8%] text-center whitespace-nowrap">SOURCE</th>
-                            <th class="py-3.5 px-4 w-[16%] whitespace-nowrap">PROJECT NAME</th>
-                            <th class="py-3.5 px-4 w-[28%] whitespace-nowrap">DESCRIPTION</th>
-                            <th class="py-3.5 px-4 w-[10%] whitespace-nowrap">OWNER</th>
-                            <th class="py-3.5 px-4 w-[10%] text-center whitespace-nowrap">OUTCOME</th>
-                            <th class="py-3.5 px-4 w-[8%] text-right whitespace-nowrap">PLAN</th>
-                            <th class="py-3.5 px-4 w-[8%] text-right whitespace-nowrap">ACTUAL</th>
-                            <th class="py-3.5 px-4 w-[12%] whitespace-nowrap">PROGRESS</th>
-                            <th class="py-3.5 px-4 w-[12%] whitespace-nowrap">SPONSOR</th>
-                            <th class="py-3.5 px-4 w-[4%] text-center whitespace-nowrap"></th>
+                        <tr class="bg-[#00508F] text-white font-bold text-[11px] uppercase tracking-wider">
+                            <th class="py-4 pl-6 pr-4 w-[8%] text-center whitespace-nowrap">SOURCE</th>
+                            <th class="py-4 px-4 w-[16%] whitespace-nowrap">PROJECT NAME</th>
+                            <th class="py-4 px-4 w-[28%] whitespace-nowrap">DESCRIPTION</th>
+                            <th class="py-4 px-4 w-[10%] whitespace-nowrap">OWNER</th>
+                            <th class="py-4 px-4 w-[10%] text-center whitespace-nowrap">OUTCOME</th>
+                            <th class="py-4 px-4 w-[8%] text-right whitespace-nowrap">PLAN</th>
+                            <th class="py-4 px-4 w-[8%] text-right whitespace-nowrap">ACTUAL</th>
+                            <th class="py-4 px-4 w-[12%] whitespace-nowrap">PROGRESS</th>
+                            <th class="py-4 px-4 w-[12%] whitespace-nowrap">SPONSOR</th>
+                            <th class="py-4 pl-4 pr-6 w-[4%] text-center whitespace-nowrap"></th>
                         </tr>
                     </thead>
                     <tbody id="table-project-body" class="divide-y divide-slate-200/60 bg-white/50"></tbody>
@@ -205,7 +205,7 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
             return `
                 <tr data-id="${r.id}" class="hover:bg-slate-50/50 transition-colors group cursor-pointer">
                     <!-- SOURCE -->
-                    <td class="py-3 px-4 text-center">
+                    <td class="py-3 pl-6 pr-4 text-center">
                         <span class="px-2.5 py-0.5 bg-blue-100/70 text-blue-800 text-[10px] font-bold rounded-lg border border-blue-200/50 whitespace-nowrap">${r.source}</span>
                     </td>
                     <!-- PROJECT NAME -->
@@ -252,7 +252,7 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
                         </div>
                     </td>
                     <!-- SILHOUETTE AVATAR -->
-                    <td class="py-3 px-4 text-center">
+                    <td class="py-3 pl-4 pr-6 text-center">
                         <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200/50">
                             <svg class="w-4 h-4 text-slate-400" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
@@ -297,7 +297,7 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
 
                     return `
                         <tr data-id="${r.id}" class="hover:bg-slate-50/50 transition-colors group cursor-pointer border-b border-slate-100">
-                            <td class="py-3 px-4 text-center">
+                            <td class="py-3 pl-6 pr-4 text-center">
                                 <span class="px-2.5 py-0.5 bg-blue-100/70 text-blue-800 text-[10px] font-bold rounded-lg border border-blue-200/50 whitespace-nowrap">${r.source}</span>
                             </td>
                             <td class="py-3 px-4">
@@ -335,7 +335,7 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
                                     <span class="text-xs font-bold text-slate-600 truncate max-w-[120px]" title="${r.sponsor}">${r.sponsor}</span>
                                 </div>
                             </td>
-                            <td class="py-3 px-4 text-center">
+                            <td class="py-3 pl-4 pr-6 text-center">
                                 <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200/50">
                                     <svg class="w-4 h-4 text-slate-400" fill="currentColor" viewBox="0 0 24 24">
                                         <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
@@ -385,17 +385,17 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
                         <div class="overflow-x-auto max-h-[72vh] overflow-y-auto" style="overscroll-behavior: contain;">
                             <table class="w-full text-left border-collapse text-xs sm:text-[13px] table-auto">
                                 <thead>
-                                    <tr class="bg-[#00508F] text-white font-bold text-[11px] uppercase tracking-wider divide-x divide-white/10 sticky top-0 z-10">
-                                        <th class="py-3.5 px-4 w-[8%] text-center whitespace-nowrap">SOURCE</th>
-                                        <th class="py-3.5 px-4 w-[16%] whitespace-nowrap">PROJECT NAME</th>
-                                        <th class="py-3.5 px-4 w-[28%] whitespace-nowrap">DESCRIPTION</th>
-                                        <th class="py-3.5 px-4 w-[10%] whitespace-nowrap">OWNER</th>
-                                        <th class="py-3.5 px-4 w-[10%] text-center whitespace-nowrap">OUTCOME</th>
-                                        <th class="py-3.5 px-4 w-[8%] text-right whitespace-nowrap">PLAN</th>
-                                        <th class="py-3.5 px-4 w-[8%] text-right whitespace-nowrap">ACTUAL</th>
-                                        <th class="py-3.5 px-4 w-[12%] whitespace-nowrap">PROGRESS</th>
-                                        <th class="py-3.5 px-4 w-[12%] whitespace-nowrap">SPONSOR</th>
-                                        <th class="py-3.5 px-4 w-[4%] text-center whitespace-nowrap"></th>
+                                    <tr class="bg-[#00508F] text-white font-bold text-[11px] uppercase tracking-wider sticky top-0 z-10">
+                                        <th class="py-4 pl-6 pr-4 w-[8%] text-center whitespace-nowrap">SOURCE</th>
+                                        <th class="py-4 px-4 w-[16%] whitespace-nowrap">PROJECT NAME</th>
+                                        <th class="py-4 px-4 w-[28%] whitespace-nowrap">DESCRIPTION</th>
+                                        <th class="py-4 px-4 w-[10%] whitespace-nowrap">OWNER</th>
+                                        <th class="py-4 px-4 w-[10%] text-center whitespace-nowrap">OUTCOME</th>
+                                        <th class="py-4 px-4 w-[8%] text-right whitespace-nowrap">PLAN</th>
+                                        <th class="py-4 px-4 w-[8%] text-right whitespace-nowrap">ACTUAL</th>
+                                        <th class="py-4 px-4 w-[12%] whitespace-nowrap">PROGRESS</th>
+                                        <th class="py-4 px-4 w-[12%] whitespace-nowrap">SPONSOR</th>
+                                        <th class="py-4 pl-4 pr-6 w-[4%] text-center whitespace-nowrap"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="popup-table-body" class="divide-y divide-slate-100 bg-white">

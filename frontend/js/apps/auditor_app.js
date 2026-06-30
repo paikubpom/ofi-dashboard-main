@@ -26,19 +26,19 @@ class AuditorApp {
         const kpis = kpisOverride || this.data.getKPIs();
         return `
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6">
-                <div class="glass-card p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+                <div class="glass-card p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-300">
                     <div>
                         <span class="text-xs text-slate-400 font-extrabold uppercase tracking-wider flex items-center gap-1.5">📋 รายการ OFI ทั้งหมด</span>
                         <p class="text-3xl font-black text-slate-800 mt-2">${kpis.total}</p>
                     </div>
                 </div>
-                <div class="glass-card p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+                <div class="glass-card p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-300">
                     <div>
                         <span class="text-xs text-slate-400 font-extrabold uppercase tracking-wider flex items-center gap-1.5">⚡ อัตราการปิดรายงาน</span>
-                        <p class="text-3xl font-black text-teal-600 mt-2">${kpis.successRate}%</p>
+                        <p class="text-3xl font-black text-blue-600 mt-2">${kpis.successRate}%</p>
                     </div>
                 </div>
-                <div class="glass-card p-5 rounded-2xl border border-rose-200 bg-rose-50/50 shadow-sm flex flex-col justify-between hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+                <div class="glass-card p-5 rounded-2xl border border-rose-200 bg-rose-50/50 shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-300">
                     <div>
                         <span class="text-xs text-rose-400 font-extrabold uppercase tracking-wider flex items-center gap-1.5">🚨 รายการที่ล่าช้า (DELAYED)</span>
                         <p class="text-3xl font-black text-rose-600 mt-2">${kpis.delayed}</p>

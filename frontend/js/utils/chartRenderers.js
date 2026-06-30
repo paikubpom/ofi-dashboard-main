@@ -476,7 +476,7 @@ export function renderAuditorDoughnut(canvasId, dataValues, labels = ['ตรว
             labels: labels,
             datasets: [{
                 data: dataValues,
-                backgroundColor: ['#A855F7', '#3B82F6'],
+                backgroundColor: ['#00508F', '#3B82F6'],
                 borderWidth: 0
             }]
         },

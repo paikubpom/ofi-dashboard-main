@@ -148,19 +148,19 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
                             ${mainTopicsList.map(t => `<option value="${t}">${t}</option>`).join('')}
                         </select>
                     </div>
-                    <button id="table-total-count" class="text-xs font-bold text-[#4F46E5] bg-indigo-50 hover:bg-indigo-100 active:scale-95 transition-all px-3 py-1.5 rounded-full border border-indigo-200/80 shadow-sm whitespace-nowrap cursor-pointer flex items-center gap-1.5 hover:shadow-md" title="คลิกเพื่อเปิดตารางขยาย (Zoom Table)">แสดง 0 รายการ 🔍 Zoom</button>
+                    <button id="table-total-count" class="text-xs font-bold text-[#00508F] bg-blue-50 hover:bg-blue-100 active:scale-95 transition-all px-3 py-1.5 rounded-full border border-blue-200/80 shadow-sm whitespace-nowrap cursor-pointer flex items-center gap-1.5 hover:shadow-md" title="คลิกเพื่อเปิดตารางขยาย (Zoom Table)">แสดง 0 รายการ 🔍 Zoom</button>
                 </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-xs sm:text-[13px] table-auto">
                     <thead>
-                        <tr class="bg-[#4F46E5] text-white font-bold text-[11px] uppercase tracking-wider divide-x divide-white/10">
-                            <th class="py-3.5 px-4 w-[8%] min-w-[70px] text-center whitespace-nowrap">หมวด</th>
-                            <th class="py-3.5 px-4 w-[56%] min-w-[350px] whitespace-nowrap">หัวข้อการประเมิน (Topic)</th>
-                            <th class="py-3.5 px-4 w-[12%] min-w-[125px] whitespace-nowrap">ผู้รับผิดชอบ (Owner)</th>
-                            <th class="py-3.5 px-4 w-[8%] min-w-[90px] text-center whitespace-nowrap">สถานะ</th>
-                            <th class="py-3.5 px-4 w-[8%] min-w-[70px] text-right whitespace-nowrap">คะแนน</th>
-                            <th class="py-3.5 px-4 w-[8%] min-w-[65px] text-center whitespace-nowrap">ระดับ</th>
+                        <tr class="bg-[#00508F] text-white font-bold text-[11px] uppercase tracking-wider">
+                            <th class="py-4 pl-6 pr-4 w-[8%] min-w-[70px] text-center whitespace-nowrap">หมวด</th>
+                            <th class="py-4 px-4 w-[56%] min-w-[350px] whitespace-nowrap">หัวข้อการประเมิน (Topic)</th>
+                            <th class="py-4 px-4 w-[12%] min-w-[125px] whitespace-nowrap">ผู้รับผิดชอบ (Owner)</th>
+                            <th class="py-4 px-4 w-[8%] min-w-[90px] text-center whitespace-nowrap">สถานะ</th>
+                            <th class="py-4 px-4 w-[8%] min-w-[70px] text-right whitespace-nowrap">คะแนน</th>
+                            <th class="py-4 pl-4 pr-6 w-[8%] min-w-[65px] text-center whitespace-nowrap">ระดับ</th>
                         </tr>
                     </thead>
                     <tbody id="table-ofi-list-body" class="divide-y divide-slate-200/60 bg-white/50"></tbody>
@@ -314,12 +314,12 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
                 issueValues = [0];
             }
 
-            const chart = renderHorizontalBarChart('issueTagsChartCanvas', issueLabels, issueValues, '#8B5CF6');
+            const chart = renderHorizontalBarChart('issueTagsChartCanvas', issueLabels, issueValues, '#00508F');
             if (chart) appInstance.charts.push(chart);
         }
 
         // 5. จัดการเรนเดอร์ตารางรายการ
-        tableCountText.innerHTML = `<span>แสดง ${total} รายการ</span> <span class="text-indigo-600">🔍 Zoom</span>`;
+        tableCountText.innerHTML = `<span>แสดง ${total} รายการ</span> <span class="text-blue-600">🔍 Zoom</span>`;
         if (total === 0) {
             tableBody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 font-medium">ไม่พบแผนงาน OFI ตรงกับตัวกรองของคุณ</td></tr>`;
             paginationWrapper.innerHTML = '';
@@ -352,15 +352,15 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
             }
 
             return `
-                <tr class="hover:bg-indigo-50/40 transition-colors group cursor-pointer animate-row-enter" data-id="${rId}">
-                    <td class="py-3 px-4 font-bold text-slate-700 text-center whitespace-nowrap">${rMod}</td>
+                <tr class="hover:bg-blue-50/40 transition-colors group cursor-pointer animate-row-enter" data-id="${rId}">
+                    <td class="py-3 pl-6 pr-4 font-bold text-slate-700 text-center whitespace-nowrap">${rMod}</td>
                     <td class="py-3 px-4 text-slate-600 max-w-[400px] lg:max-w-[600px] xl:max-w-[800px] truncate" title="${rTopic}">${rTopic}</td>
                     <td class="py-3 px-4 text-slate-500 font-medium whitespace-nowrap">${rOwner}</td>
                     <td class="py-3 px-4 text-center">
                         <span class="px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap ${badgeClass}">${badgeText}</span>
                     </td>
                     <td class="py-3 px-4 text-right font-mono font-bold text-slate-600 whitespace-nowrap">${rScore}</td>
-                    <td class="py-3 px-4 text-center font-bold text-[#4F46E5] whitespace-nowrap">${rLvl}</td>
+                    <td class="py-3 pl-4 pr-6 text-center font-bold text-[#00508F] whitespace-nowrap">${rLvl}</td>
                 </tr>
             `;
         }).join('');
@@ -431,15 +431,15 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
                     }
 
                     return `
-                        <tr class="hover:bg-indigo-50/40 transition-colors group cursor-pointer border-b border-slate-100" data-id="${rId}">
-                            <td class="py-3 px-4 font-bold text-slate-700 text-center whitespace-nowrap">${rMod}</td>
+                        <tr class="hover:bg-blue-50/40 transition-colors group cursor-pointer border-b border-slate-100" data-id="${rId}">
+                            <td class="py-3 pl-6 pr-4 font-bold text-slate-700 text-center whitespace-nowrap">${rMod}</td>
                             <td class="py-3 px-4 text-slate-600 max-w-[400px] lg:max-w-[600px] xl:max-w-[800px] truncate" title="${rTopic}">${rTopic}</td>
                             <td class="py-3 px-4 text-slate-500 font-medium whitespace-nowrap">${rOwner}</td>
                             <td class="py-3 px-4 text-center">
                                 <span class="px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap ${badgeClass}">${badgeText}</span>
                             </td>
                             <td class="py-3 px-4 text-right font-mono font-bold text-slate-600 whitespace-nowrap">${rScore}</td>
-                            <td class="py-3 px-4 text-center font-bold text-[#4F46E5] whitespace-nowrap">${rLvl}</td>
+                            <td class="py-3 pl-4 pr-6 text-center font-bold text-[#00508F] whitespace-nowrap">${rLvl}</td>
                         </tr>
                     `;
                 }).join('');
@@ -479,20 +479,20 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
                             <option value="">ระดับ: ทั้งหมด</option>
                             ${levelsList.map(l => `<option value="${l}">L${l}</option>`).join('')}
                         </select>
-                        <div class="ml-auto text-xs font-bold text-[#4F46E5] bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100 whitespace-nowrap" id="popup-total-count-badge">แสดง ${filteredRecords.length} รายการ</div>
+                        <div class="ml-auto text-xs font-bold text-[#00508F] bg-blue-50 px-3 py-1 rounded-full border border-blue-100 whitespace-nowrap" id="popup-total-count-badge">แสดง ${filteredRecords.length} รายการ</div>
                     </div>
 
                     <div class="overflow-hidden border border-slate-200/80 rounded-2xl shadow-sm bg-white">
                         <div class="overflow-x-auto max-h-[72vh] overflow-y-auto" style="overscroll-behavior: contain;">
                             <table class="w-full text-left border-collapse text-xs sm:text-[13px] table-auto">
                                 <thead>
-                                    <tr class="bg-[#4F46E5] text-white font-bold text-[11px] uppercase tracking-wider divide-x divide-white/10 sticky top-0 z-10">
-                                        <th class="py-3.5 px-4 w-[8%] text-center whitespace-nowrap">หมวด</th>
-                                        <th class="py-3.5 px-4 w-[56%] whitespace-nowrap">หัวข้อการประเมิน (Topic)</th>
-                                        <th class="py-3.5 px-4 w-[12%] whitespace-nowrap">ผู้รับผิดชอบ (Owner)</th>
-                                        <th class="py-3.5 px-4 w-[8%] text-center whitespace-nowrap">สถานะ</th>
-                                        <th class="py-3.5 px-4 w-[8%] text-right whitespace-nowrap">คะแนน</th>
-                                        <th class="py-3.5 px-4 w-[8%] text-center whitespace-nowrap">ระดับ</th>
+                                    <tr class="bg-[#00508F] text-white font-bold text-[11px] uppercase tracking-wider sticky top-0 z-10">
+                                        <th class="py-4 pl-6 pr-4 w-[8%] text-center whitespace-nowrap">หมวด</th>
+                                        <th class="py-4 px-4 w-[56%] whitespace-nowrap">หัวข้อการประเมิน (Topic)</th>
+                                        <th class="py-4 px-4 w-[12%] whitespace-nowrap">ผู้รับผิดชอบ (Owner)</th>
+                                        <th class="py-4 px-4 w-[8%] text-center whitespace-nowrap">สถานะ</th>
+                                        <th class="py-4 px-4 w-[8%] text-right whitespace-nowrap">คะแนน</th>
+                                        <th class="py-4 pl-4 pr-6 w-[8%] text-center whitespace-nowrap">ระดับ</th>
                                     </tr>
                                 </thead>
                                 <tbody id="popup-table-body" class="divide-y divide-slate-100 bg-white">
