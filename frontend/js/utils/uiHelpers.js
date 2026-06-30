@@ -748,8 +748,8 @@ export async function initSidebar(currentRole, activeOwnerKey = '') {
                 <div class="flex items-center gap-3 mb-8 pb-4 border-b border-white/10">
                     <span class="text-2xl animate-pulse">🚀</span>
                     <div>
-                        <h3 class="text-sm font-black tracking-wider text-slate-100 uppercase">PTT OFI SYSTEM</h3>
-                        <p class="text-[9px] text-slate-400 font-extrabold tracking-widest mt-0.5">ULTIMATE INTEGRATION</p>
+                        <h3 class="text-sm font-black tracking-wider text-slate-100 uppercase">OFI DSAHBOARD</h3>
+                        <p class="text-[12px] text-slate-400 font-extrabold tracking-widest mt-0.5">SE-AM</p>
                     </div>
                 </div>
 
