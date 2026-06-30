@@ -356,7 +356,7 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
             const popupContentHtml = `
                 <div class="space-y-4">
                     <!-- Popup Filter Bar -->
-                    <div class="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/60 flex flex-wrap gap-3 items-center">
+                    <div class="bg-white/40 border border-white/60 shadow-sm backdrop-blur-md p-4 rounded-2xl flex flex-wrap gap-3 items-center">
                         <span class="text-xs font-bold text-slate-500 flex items-center gap-1">🔎 ตัวกรองด่วน:</span>
                         <select id="popup-filter-source" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400">
                             <option value="">แหล่งที่มา: ทั้งหมด</option>
@@ -455,37 +455,37 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
     const showProjectDetailModal = (record, row = null) => {
         const modalContent = `
             <div class="space-y-5 py-2">
-                <div class="p-4 bg-blue-50/70 rounded-2xl border border-blue-100/80">
+                <div class="p-4 bg-blue-50/40 rounded-2xl border border-blue-100/30 backdrop-blur-md">
                     <h5 class="text-[11px] font-extrabold text-[#00508F] uppercase tracking-wider mb-1">ชื่อโครงการ (Project Name)</h5>
                     <p class="text-sm font-bold text-slate-800 leading-relaxed">${record.project_name}</p>
                 </div>
                 
                 <div>
                     <h5 class="text-[11px] font-extrabold text-[#00508F] uppercase tracking-wider mb-2">รายละเอียดโครงการ (Description)</h5>
-                    <p class="text-xs font-semibold text-slate-900 leading-relaxed bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80">${record.description || 'ไม่มีรายละเอียด'}</p>
+                    <p class="text-xs font-semibold text-slate-900 leading-relaxed bg-white/40 border border-white/60 shadow-sm backdrop-blur-md p-4 rounded-2xl">${record.description || 'ไม่มีรายละเอียด'}</p>
                 </div>
 
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100">
+                    <div class="p-3 bg-white/40 border border-white/60 shadow-sm backdrop-blur-md rounded-xl text-center">
                         <span class="block text-[10px] font-extrabold text-slate-600 uppercase">ผู้ดูแล (Owner)</span>
                         <span class="block text-xs font-bold text-slate-800 mt-1">${record.owner || '-'}</span>
                     </div>
-                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100">
+                    <div class="p-3 bg-white/40 border border-white/60 shadow-sm backdrop-blur-md rounded-xl text-center">
                         <span class="block text-[10px] font-extrabold text-slate-600 uppercase">แหล่งที่มา (Source)</span>
                         <span class="block text-xs font-bold text-slate-800 mt-1">${record.source || '-'}</span>
                     </div>
-                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100">
+                    <div class="p-3 bg-white/40 border border-white/60 shadow-sm backdrop-blur-md rounded-xl text-center">
                         <span class="block text-[10px] font-extrabold text-slate-600 uppercase">เป้าหมาย (Plan)</span>
                         <span class="block text-xs font-mono font-black text-slate-800 mt-1">${formatNumber(record.plan, 2)}</span>
                     </div>
-                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100">
+                    <div class="p-3 bg-white/40 border border-white/60 shadow-sm backdrop-blur-md rounded-xl text-center">
                         <span class="block text-[10px] font-extrabold text-slate-600 uppercase">ผลงานจริง (Actual)</span>
                         <span class="block text-xs font-mono font-black text-slate-800 mt-1">${formatNumber(record.actual, 2)}</span>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100 flex flex-col justify-center animate-pulse">
+                    <div class="p-3 bg-white/40 border border-white/60 shadow-sm backdrop-blur-md rounded-xl text-center flex flex-col justify-center animate-pulse">
                         <span class="block text-[10px] font-extrabold text-slate-600 uppercase">ความคืบหน้าโครงการ</span>
                         <div class="flex items-center justify-center gap-3 mt-2">
                             <div class="w-24 bg-slate-200 h-2.5 rounded-full overflow-hidden shrink-0">
@@ -494,13 +494,13 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
                             <span class="font-mono font-extrabold text-slate-800 text-xs">${record.progress || 0}%</span>
                         </div>
                     </div>
-                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100">
+                    <div class="p-3 bg-white/40 border border-white/60 shadow-sm backdrop-blur-md rounded-xl text-center">
                         <span class="block text-[10px] font-extrabold text-slate-600 uppercase">ผลลัพธ์โครงการ (Outcome)</span>
                         <span class="block text-xs font-bold text-slate-800 mt-1.5">${record.outcome || '-'}</span>
                     </div>
                 </div>
 
-                <div class="border-t border-slate-200/50 pt-4 flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <div class="border-t border-slate-200/40 pt-4 flex justify-between items-center bg-white/40 border border-white/60 shadow-sm backdrop-blur-md p-4 rounded-2xl">
                     <div class="flex items-center gap-2">
                         <span class="text-[11px] font-extrabold text-[#00508F] uppercase tracking-wider">ผู้สนับสนุนโครงการ (Sponsor)</span>
                     </div>

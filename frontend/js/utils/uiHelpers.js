@@ -13,10 +13,10 @@ export function showSharedGlassModal(title, subtitle, contentHtml, size = 'md', 
             <div class="glass-card ${widthClass} w-full p-6 rounded-3xl shadow-2xl flex flex-col max-h-[90vh] transform scale-95 transition-all duration-300" style="overscroll-behavior: contain;">
                 <div class="flex justify-between items-center border-b border-slate-200/40 pb-4 mb-4">
                     <div>
-                        <h4 class="text-base font-bold text-slate-800">${title}</h4>
-                        <p class="text-[11px] text-slate-600 mt-0.5 font-bold">${subtitle}</p>
+                        <h4 class="text-base font-black text-[#00508F] tracking-wide">${title}</h4>
+                        <p class="text-[11px] text-slate-500 mt-0.5 font-semibold">${subtitle}</p>
                     </div>
-                    <button id="close-global-modal-btn" class="p-1.5 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors">
+                    <button id="close-global-modal-btn" class="p-1.5 hover:bg-blue-50 rounded-full text-slate-400 hover:text-[#00508F] transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
@@ -42,7 +42,7 @@ export function showSharedGlassModal(title, subtitle, contentHtml, size = 'md', 
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     const overlay = document.getElementById('global-modal-overlay');
     const card = overlay.querySelector('.glass-card');
-    const closeBtn = document.getElementById('close-global-modal-btn');
+    const closeBtn = overlay.querySelector('#close-global-modal-btn');
 
     if (onClose) {
         closeBtn._onClose = onClose;
@@ -59,8 +59,10 @@ export function showSharedGlassModal(title, subtitle, contentHtml, size = 'md', 
         // Unlock scroll on both html and body
         document.documentElement.style.overflow = '';
         document.body.style.overflow = '';
-        if (typeof onClose === 'function') onClose();
-        setTimeout(() => overlay.remove(), 250);
+        setTimeout(() => {
+            overlay.remove();
+            if (typeof onClose === 'function') onClose();
+        }, 250);
     };
 
     closeBtn.addEventListener('click', closeModal);

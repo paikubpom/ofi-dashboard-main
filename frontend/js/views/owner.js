@@ -319,7 +319,10 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
         }
 
         // 5. จัดการเรนเดอร์ตารางรายการ
-        tableCountText.innerHTML = `<span>แสดง ${total} รายการ</span> <span class="text-blue-600">🔍 Zoom</span>`;
+        tableCountText.innerHTML = `<span>แสดง ${total} รายการ</span> 
+        <button class="btn-expand-chart p-1 text-slate-400 hover:text-blue-600 hover:bg-slate-50 rounded-lg transition" data-chart-id="chart-defect-source" title="ขยายกราฟ (Zoom Chart)">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4m12 4V4h-4M4 16v4h4m12-4v4h-4" /></svg>
+                        </button>`;
         if (total === 0) {
             tableBody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 font-medium">ไม่พบแผนงาน OFI ตรงกับตัวกรองของคุณ</td></tr>`;
             paginationWrapper.innerHTML = '';
@@ -454,7 +457,7 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
             const popupContentHtml = `
                 <div class="space-y-4">
                     <!-- Popup Filter Bar -->
-                    <div class="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/60 flex flex-wrap gap-3 items-center">
+                    <div class="bg-white/40 border border-white/60 shadow-sm backdrop-blur-md p-4 rounded-2xl flex flex-wrap gap-3 items-center">
                         <span class="text-xs font-bold text-slate-500 flex items-center gap-1">🔎 ตัวกรองด่วน:</span>
                         <select id="popup-filter-module" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400">
                             <option value="">หมวด: ทั้งหมด</option>
@@ -577,7 +580,7 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
             }
             
             return `
-                <div class="p-3 bg-slate-50/80 rounded-2xl border border-slate-100 text-center flex flex-col justify-between h-20">
+                <div class="p-3 bg-white/40 border border-white/60 shadow-sm backdrop-blur-md rounded-2xl text-center flex flex-col justify-between h-20">
                     <span class="block text-[10px] font-extrabold text-slate-700">${p.label}</span>
                     <span class="px-2 py-0.5 rounded-full text-[9px] font-black inline-block mt-2 ${badgeColor}">${phaseStatus}</span>
                 </div>`;
@@ -589,32 +592,54 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
         }
 
         const score = getRecordScore(record).toFixed(4);
+
+        const isExcel = String(record._source_file || '').toLowerCase().endsWith('.xlsx') || String(record._source_file || '').toLowerCase().endsWith('.xls');
+        let fileButtonsHtml = '';
+        if (isExcel) {
+            fileButtonsHtml = `
+                <div class="flex gap-2">
+                    <button id="btn-preview-excel" data-file="${record._source_file || ''}" class="px-4 py-2 bg-[#00508F] hover:bg-[#003D6F] text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer active:scale-95">
+                        👁️ เปิดพรีวิวตาราง (Preview)
+                    </button>
+                    <a href="/static-data/${record._source_file || 'data.json'}" target="_blank" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer border border-slate-200 active:scale-95" title="ดาวน์โหลดไฟล์ต้นฉบับ">
+                        📥
+                    </a>
+                </div>
+            `;
+        } else {
+            fileButtonsHtml = `
+                <a href="/static-data/${record._source_file || 'data.json'}" target="_blank" class="px-4 py-2 bg-[#00508F] hover:bg-[#003d70] text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer">
+                    📂 เปิดดูไฟล์: ${record._source_file || 'ไม่มีไฟล์'}
+                </a>
+            `;
+        }
+
         const modalContent = `
             <div class="space-y-5 py-2">
-                <div class="p-4 bg-blue-50/70 rounded-2xl border border-blue-100/80">
+                <div class="p-4 bg-blue-50/40 rounded-2xl border border-blue-100/30 backdrop-blur-md">
                     <h5 class="text-[11px] font-extrabold text-[#00508F] uppercase tracking-wider mb-1">หัวข้อการประเมิน (Assessment Topic)</h5>
                     <p class="text-xs font-bold text-slate-800 leading-relaxed">${getRecordTopicName(record)}</p>
                 </div>
                 
                 <div>
                     <h5 class="text-[11px] font-extrabold text-[#00508F] uppercase tracking-wider mb-2">รายละเอียดข้อเสนอแนะหลัก (OFI Description)</h5>
-                    <p class="text-sm font-semibold text-slate-900 leading-relaxed bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80">${getRecordTitle(record)}</p>
+                    <p class="text-sm font-semibold text-slate-900 leading-relaxed bg-white/40 border border-white/60 shadow-sm backdrop-blur-md p-4 rounded-2xl">${getRecordTitle(record)}</p>
                 </div>
 
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100">
+                    <div class="p-3 bg-white/40 border border-white/60 shadow-sm backdrop-blur-md rounded-xl text-center">
                         <span class="block text-[10px] font-extrabold text-slate-600 uppercase">ผู้ดูแลแผนงาน</span>
                         <span class="block text-xs font-bold text-slate-800 mt-1">${getRecordOwnerName(record)}</span>
                     </div>
-                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100">
+                    <div class="p-3 bg-white/40 border border-white/60 shadow-sm backdrop-blur-md rounded-xl text-center">
                         <span class="block text-[10px] font-extrabold text-slate-600 uppercase">คะแนนผลลัพธ์</span>
                         <span class="block text-xs font-mono font-black text-[#00508F] mt-1">${score} / 5.0000</span>
                     </div>
-                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100">
+                    <div class="p-3 bg-white/40 border border-white/60 shadow-sm backdrop-blur-md rounded-xl text-center">
                         <span class="block text-[10px] font-extrabold text-slate-600 uppercase">ระดับความยาก</span>
                         <span class="block text-xs font-black text-[#00508F] mt-1">${record.ofiLevel || 'อื่นๆ'}</span>
                     </div>
-                    <div class="p-3 bg-slate-50/80 rounded-xl text-center border border-slate-100">
+                    <div class="p-3 bg-white/40 border border-white/60 shadow-sm backdrop-blur-md rounded-xl text-center">
                         <span class="block text-[10px] font-extrabold text-slate-600 uppercase">แหล่งที่มาของปัญหา</span>
                         <span class="block text-xs font-bold text-slate-800 mt-1">${record.defectSource || '-'}</span>
                     </div>
@@ -634,11 +659,9 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
                 </div>
 
                 <!-- 💾 ส่วนแสดงไฟล์ Database ต้นทางสำหรับข้อมูลนี้ -->
-                <div class="border-t border-slate-200/50 pt-4 flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <div class="border-t border-slate-200/40 pt-4 flex justify-between items-center bg-white/40 border border-white/60 shadow-sm backdrop-blur-md p-4 rounded-2xl">
                     <span class="text-[11px] font-extrabold text-[#00508F] uppercase tracking-wider">💾 ไฟล์คลังข้อมูล (Source Database File)</span>
-                    <a href="/static-data/${record._source_file || 'data.json'}" target="_blank" class="px-4 py-2 bg-[#00508F] hover:bg-[#003d70] text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer">
-                        📂 เปิดดูไฟล์: ${record._source_file || 'ไม่มีไฟล์'}
-                    </a>
+                    ${fileButtonsHtml}
                 </div>
             </div>`;
 
@@ -647,6 +670,20 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
         };
 
         showSharedGlassModal(`รายละเอียดแผนงาน OFI: ${id}`, `จากแหล่งข้อมูล: ${record._source_file || 'คลังข้อมูลกลาง'}`, modalContent, 'md', onClose);
+
+        const btnPreview = document.getElementById('btn-preview-excel');
+        if (btnPreview) {
+            btnPreview.addEventListener('click', async () => {
+                const file = btnPreview.dataset.file;
+                if (!file) return;
+                
+                const { showExcelPreviewModal } = await import('../utils/excelPreview.js');
+                showExcelPreviewModal(`/static-data/${file}`, file, getRecordTitle(record), () => {
+                    // Re-open detail modal on close
+                    showOfiDetailModal(record, row);
+                });
+            });
+        }
     };
 
     // --- ลงทะเบียน Event Listeners สำหรับตัวกรองข้อมูล ---
