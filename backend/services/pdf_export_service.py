@@ -27,15 +27,28 @@ class PDFExportService:
         self.browser: Optional[Browser] = None
 
     async def initialize(self) -> None:
-        """Initialize Playwright and launch the browser."""
+        """Initialize Playwright and launch the browser with fallback support."""
         self.playwright = await async_playwright().start()
-        # Prefer edge/chrome if available, else standard chromium
-        self.browser = await self.playwright.chromium.launch(
-            channel="msedge",
-            headless=True,
-            args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
-        )
-        log.info("[PDFExportService] Microsoft Edge / Chromium browser started.")
+        try:
+            # Prefer edge if available
+            self.browser = await self.playwright.chromium.launch(
+                channel="msedge",
+                headless=True,
+                args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
+            )
+            log.info("[PDFExportService] Microsoft Edge browser started.")
+        except Exception as e:
+            log.warning(f"[PDFExportService] Failed to launch with channel 'msedge' ({e}). Falling back to standard Chromium...")
+            try:
+                # Fallback to standard chromium
+                self.browser = await self.playwright.chromium.launch(
+                    headless=True,
+                    args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
+                )
+                log.info("[PDFExportService] Standard Chromium browser started.")
+            except Exception as e2:
+                log.error(f"[PDFExportService] Failed to launch standard Chromium: {e2}")
+                raise e2
 
     async def close(self) -> None:
         """Close browser and stop Playwright."""
@@ -78,12 +91,14 @@ class PDFExportService:
         local_state: Optional[Dict] = None,
         session_state: Optional[Dict] = None,
         dom_state: Optional[List] = None,
+        base_url: Optional[str] = None,
     ) -> bytes:
         """Launch context, inject states, wait for canvas render, and capture page."""
         if not self.browser:
             raise ValueError("Browser is not initialized.")
             
-        url = self.base_url + ROLE_PATHS[role]
+        actual_base_url = base_url or self.base_url
+        url = actual_base_url + ROLE_PATHS[role]
         if role == "owner" and token and token.startswith("owner:"):
             import urllib.parse
             owner_id = token.split(":")[1]
@@ -117,6 +132,8 @@ class PDFExportService:
                     }
                 """, [local_state, session_state])
                 await page.reload(wait_until="networkidle", timeout=60_000)
+                await page.wait_for_load_state("load")
+                await page.wait_for_load_state("domcontentloaded")
 
             if dom_state:
                 await page.evaluate("""
@@ -137,14 +154,23 @@ class PDFExportService:
                 """, dom_state)
                 await page.wait_for_timeout(4000) # Wait for dropdown updates
 
-            # Wait for canvas rendering
-            await page.wait_for_function("""
-                () => {
-                    const canvases = document.querySelectorAll('canvas');
-                    if (canvases.length === 0) return false;
-                    return Array.from(canvases).every(c => c.width > 0 && c.height > 0);
-                }
-            """, timeout=10000)
+            try:
+                # Wait for table rows to be rendered (max 5 seconds)
+                await page.wait_for_selector("tbody tr", timeout=5000)
+            except Exception as e:
+                log.warning(f"[PDFExportService] Timeout waiting for table rows: {e}. Proceeding.")
+
+            try:
+                # Wait for canvas rendering (max 5 seconds)
+                await page.wait_for_function("""
+                    () => {
+                        const canvases = document.querySelectorAll('canvas');
+                        if (canvases.length === 0) return true; // Proceed if no canvas exists
+                        return Array.from(canvases).every(c => c.width > 0 && c.height > 0);
+                    }
+                """, timeout=5000)
+            except Exception as e:
+                log.warning(f"[PDFExportService] Wait for canvas timed out or failed: {e}. Proceeding with capture.")
             
             if session_state and "_EXPORT_CHART_STATE_" in session_state:
                 await page.evaluate("""
@@ -173,13 +199,17 @@ class PDFExportService:
             # Hide components that shouldn't show in PDF/export
             await page.evaluate("""
                 () => {
-                    ['#download-pdf-btn', '#download-pdf-btn-wrapper', '[data-hide-on-export]', '.no-export'].forEach(sel => {
+                    ['#download-pdf-btn', '#download-pdf-btn-wrapper', '[data-hide-on-export]', '.no-export', '#sidebar-container', '#sidebar-toggle-handle', '#sidebar-backdrop'].forEach(sel => {
                         document.querySelectorAll(sel).forEach(el => { 
                             if(el) el.style.display = 'none';
                         });
                     });
                     const style = document.createElement('style');
-                    style.textContent = '::-webkit-scrollbar { display: none !important; }';
+                    style.textContent = `
+                        ::-webkit-scrollbar { display: none !important; }
+                        #sidebar-container, #sidebar-toggle-handle, #sidebar-backdrop { display: none !important; }
+                        #main-container-layout { margin-left: 0 !important; width: 100% !important; padding-left: 0 !important; }
+                    `;
                     document.head.appendChild(style);
                 }
             """)
@@ -195,6 +225,7 @@ class PDFExportService:
                     );
                 }
             """)
+            full_height += 100 # Add a buffer to prevent page splitting
             await page.wait_for_timeout(1000) # Wait for image lazy loading
 
             if output_format == "pdf":
@@ -209,8 +240,7 @@ class PDFExportService:
                 await page.wait_for_timeout(500)
                 png_bytes = await page.screenshot(
                     full_page=True, 
-                    type="png", 
-                    clip={"x": 0, "y": 0, "width": viewport_width, "height": full_height},
+                    type="png"
                 )
                 
                 img = Image.open(io.BytesIO(png_bytes)).convert("RGB")
@@ -254,16 +284,28 @@ class PDFExportService:
             )
 
         try:
-            data = await self._capture_page(
-                role=role.lower(), 
-                output_format=fmt, 
-                viewport_width=width, 
-                extra_wait_ms=wait_ms, 
-                token=token, 
-                local_state=local_state, 
-                session_state=session_state, 
-                dom_state=dom_state
-            )
+            request_base_url = str(request.base_url).rstrip('/')
+            # Try capturing with a retry mechanism for context destruction errors
+            for attempt in range(2):
+                try:
+                    data = await self._capture_page(
+                        role=role.lower(), 
+                        output_format=fmt, 
+                        viewport_width=width, 
+                        extra_wait_ms=wait_ms, 
+                        token=token, 
+                        local_state=local_state, 
+                        session_state=session_state, 
+                        dom_state=dom_state,
+                        base_url=request_base_url
+                    )
+                    break
+                except Exception as exc:
+                    if "context was destroyed" in str(exc).lower() and attempt == 0:
+                        log.warning(f"[PDFExportService] Context destroyed during capture. Retrying in 1s...")
+                        await asyncio.sleep(1)
+                        continue
+                    raise exc
         except Exception as exc:
             raise HTTPException(status_code=500, detail=f"ไม่สามารถสร้างไฟล์ได้: {exc}")
 

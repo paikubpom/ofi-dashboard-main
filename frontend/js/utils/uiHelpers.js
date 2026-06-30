@@ -536,7 +536,7 @@ export function getSharedHeaderHtml(roleTitle, dotColorClass = 'bg-blue-500', sh
         : '';
 
     return `
-        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white px-6 py-5 sm:px-8 sm:py-6 rounded-3xl shadow-sm border border-slate-200/60 animate-fade-in-up gap-6">
+        <header class="relative z-[99] flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white px-6 py-5 sm:px-8 sm:py-6 rounded-3xl shadow-sm border border-slate-200/60 animate-fade-in-up gap-6">
             
             <div class="flex items-center gap-5 sm:gap-6">
                 <img src="/assets/pngptt.png" alt="Corporate Logo" class="h-16 sm:h-20 w-auto object-contain hover:scale-105 transition-transform duration-200">
@@ -975,38 +975,38 @@ export async function initSidebar(currentRole, activeOwnerKey = '') {
             });
         }
 
-        // 📐 สร้าง Grid สีแดงสำหรับตรวจสอบการจัดวางหน้าจอ (UX/UI Red Grid Overlay Helper)
-        if (!document.getElementById('ux-grid-overlay')) {
-            const gridOverlay = document.createElement('div');
-            gridOverlay.id = 'ux-grid-overlay';
+        // // 📐 สร้าง Grid สีแดงสำหรับตรวจสอบการจัดวางหน้าจอ (UX/UI Red Grid Overlay Helper)
+        // if (!document.getElementById('ux-grid-overlay')) {
+        //     const gridOverlay = document.createElement('div');
+        //     gridOverlay.id = 'ux-grid-overlay';
             
-            gridOverlay.className = 'pointer-events-none absolute inset-0 z-[50] hidden w-full overflow-hidden flex justify-center';
-            gridOverlay.innerHTML = `
-                <div class="h-full w-full grid grid-cols-12 gap-6 px-4 xl:px-0" style="max-width: 1344px;">
-                    ${Array(12).fill('<div class="h-full bg-[#FF0000]/10 border-x border-[#FF0000]/20"></div>').join('')}
-                </div>
-            `;
+        //     gridOverlay.className = 'pointer-events-none absolute inset-0 z-[50] hidden w-full overflow-hidden flex justify-center';
+        //     gridOverlay.innerHTML = `
+        //         <div class="h-full w-full grid grid-cols-12 gap-6 px-4 xl:px-0" style="max-width: 1344px;">
+        //             ${Array(12).fill('<div class="h-full bg-[#FF0000]/10 border-x border-[#FF0000]/20"></div>').join('')}
+        //         </div>
+        //     `;
             
-            mainContainer.appendChild(gridOverlay);
+        //     mainContainer.appendChild(gridOverlay);
 
-            const toggleGridBtn = document.createElement('button');
-            toggleGridBtn.id = 'toggle-grid-btn';
-            toggleGridBtn.className = 'fixed bottom-4 right-4 z-[999999] w-10 h-10 bg-slate-800/90 hover:bg-red-600 text-white hover:text-white rounded-full shadow-lg backdrop-blur-md border border-white/10 transition-all duration-300 active:scale-95 flex items-center justify-center font-bold text-xs';
-            toggleGridBtn.title = 'แสดง/ซ่อน Grid สีแดง (UX/UI Layout Helper)';
-            toggleGridBtn.innerHTML = '📐';
-            document.body.appendChild(toggleGridBtn);
+        //     const toggleGridBtn = document.createElement('button');
+        //     toggleGridBtn.id = 'toggle-grid-btn';
+        //     toggleGridBtn.className = 'fixed bottom-4 right-4 z-[999999] w-10 h-10 bg-slate-800/90 hover:bg-red-600 text-white hover:text-white rounded-full shadow-lg backdrop-blur-md border border-white/10 transition-all duration-300 active:scale-95 flex items-center justify-center font-bold text-xs';
+        //     toggleGridBtn.title = 'แสดง/ซ่อน Grid สีแดง (UX/UI Layout Helper)';
+        //     toggleGridBtn.innerHTML = '📐';
+        //     document.body.appendChild(toggleGridBtn);
 
-            toggleGridBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const isHidden = gridOverlay.classList.toggle('hidden');
-                if (!isHidden) {
-                    toggleGridBtn.classList.add('bg-red-600');
-                    toggleGridBtn.classList.remove('bg-slate-800/90');
-                } else {
-                    toggleGridBtn.classList.remove('bg-red-600');
-                    toggleGridBtn.classList.add('bg-slate-800/90');
-                }
-            });
-        }
+        //     toggleGridBtn.addEventListener('click', (e) => {
+        //         e.stopPropagation();
+        //         const isHidden = gridOverlay.classList.toggle('hidden');
+        //         if (!isHidden) {
+        //             toggleGridBtn.classList.add('bg-red-600');
+        //             toggleGridBtn.classList.remove('bg-slate-800/90');
+        //         } else {
+        //             toggleGridBtn.classList.remove('bg-red-600');
+        //             toggleGridBtn.classList.add('bg-slate-800/90');
+        //         }
+        //     });
+        // }
     }
 }

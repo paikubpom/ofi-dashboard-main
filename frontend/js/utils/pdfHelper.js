@@ -1,7 +1,8 @@
 import { showSharedGlassToast } from './uiHelpers.js';
 
 /**
- * 🚀 ระบบส่งออกรายงาน (เวอร์ชัน API - Capture ด้วย Server พร้อมซิงก์ข้อมูลหน้าจอ)
+ * 🚀 ระบบส่งออกรายงาน (เวอร์ชัน Client-side + Chart.js Fix + Layout Scale Fix)
+ * แก้ปัญหากราฟหาย (Animation conflict) และแก้ปัญหาภาพโดนครอปหรือล้นจอ
  */
 export function initGlobalPdfExport(roleName) {
     const createExportButton = () => {
@@ -62,20 +63,30 @@ export function initGlobalPdfExport(roleName) {
                 <div class="p-5 bg-slate-900 rounded-2xl border border-slate-800 flex flex-col items-center gap-4 shadow-2xl text-center max-w-xs mx-4">
                     <div class="w-9 h-9 border-4 border-[#00508F] border-t-transparent rounded-full animate-spin"></div>
                     <div><h5 class="text-sm font-bold">กำลังสร้างไฟล์ ${fmt.toUpperCase()}</h5>
+                    <p class="text-[10px] text-slate-400 mt-1">กำลังเรนเดอร์กราฟและภาพ กรุณารอสักครู่...</p>
                     </div>
                 </div>`;
             document.body.appendChild(loader);
 
             try {
                 const ts = Date.now();
-                const localState = {}; for (let i = 0; i < localStorage.length; i++) localState[localStorage.key(i)] = localStorage.getItem(localStorage.key(i));
-                const sessionState = {}; for (let i = 0; i < sessionStorage.length; i++) sessionState[sessionStorage.key(i)] = sessionStorage.getItem(sessionStorage.key(i));
+                const localState = {};
+                for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    localState[k] = localStorage.getItem(k);
+                }
+                const sessionState = {};
+                for (let i = 0; i < sessionStorage.length; i++) {
+                    const k = sessionStorage.key(i);
+                    sessionState[k] = sessionStorage.getItem(k);
+                }
+
                 try {
-                    if (window.Chart) {
+                    if (window.Chart && window.Chart.instances) {
                         const chartStates = Object.values(window.Chart.instances).map(chart => {
                             const hidden = [];
                             chart.data.datasets.forEach((ds, idx) => {
-                                if (!chart.isDatasetVisible(idx)) hidden.push(idx); // จดไว้ว่าเส้นไหนโดนซ่อน
+                                if (!chart.isDatasetVisible(idx)) hidden.push(idx);
                             });
                             return {
                                 index: Array.from(document.querySelectorAll('canvas')).indexOf(chart.canvas),
@@ -84,34 +95,44 @@ export function initGlobalPdfExport(roleName) {
                         });
                         sessionState['_EXPORT_CHART_STATE_'] = JSON.stringify(chartStates);
                     }
-                } catch (e) { console.warn("อ่านสถานะกราฟไม่ได้", e); }
-                
+                } catch (err) {
+                    console.warn("ไม่สามารถอ่านสถานะกราฟได้:", err);
+                }
+
                 const domState = Array.from(document.querySelectorAll('select')).map(sel => ({
-                    id: sel.id, value: sel.value
+                    id: sel.id,
+                    value: sel.value
                 }));
 
+                const viewportWidth = window.innerWidth;
                 const endpoint = fmt === 'pdf' 
-                    ? `/api/export-pdf/${roleName.toLowerCase()}?nocache=true` 
-                    : `/api/export-jpg/${roleName.toLowerCase()}?nocache=true`;
+                    ? `/api/export-pdf/${roleName.toLowerCase()}?nocache=true&width=${viewportWidth}` 
+                    : `/api/export-jpg/${roleName.toLowerCase()}?nocache=true&width=${viewportWidth}`;
 
                 let authHeader = `Bearer ${roleName.toLowerCase()}`;
                 if (roleName.toLowerCase() === 'owner') {
                     const urlParams = new URLSearchParams(window.location.search);
-                    const ownerKey = urlParams.get('owner') || 'owner-pakorn';
+                    const ownerKey = urlParams.get('owner') || '';
                     authHeader = `Bearer owner:${encodeURIComponent(ownerKey)}`;
                 }
 
                 const response = await fetch(endpoint, {
                     method: 'POST',
-                    headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        local_state: localState, 
-                        session_state: sessionState, 
-                        dom_state: domState 
+                    headers: {
+                        'Authorization': authHeader,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        local_state: localState,
+                        session_state: sessionState,
+                        dom_state: domState
                     })
                 });
 
-                if (!response.ok) throw new Error("Server API Error");
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Server Error: ${response.status} - ${errorText}`);
+                }
 
                 const blob = await response.blob();
                 const downloadUrl = window.URL.createObjectURL(blob);
@@ -123,11 +144,14 @@ export function initGlobalPdfExport(roleName) {
                 downloadLink.click();
                 window.URL.revokeObjectURL(downloadUrl);
                 downloadLink.remove();
+
+                showSharedGlassToast(`ดาวน์โหลดรายงาน ${fmt.toUpperCase()} สำเร็จ 🎉`, "success");
             } catch (err) {
                 console.error("Export Error:", err);
-                showSharedGlassToast("เกิดข้อผิดพลาดในการส่งออกข้อมูล กรุณาลองใหม่อีกครั้งครับ", "error");
+                showSharedGlassToast("เกิดข้อผิดพลาดในการสร้างไฟล์ กรุณาลองใหม่อีกครั้งครับ", "error");
             } finally {
-                loader.remove(); btn.disabled = false;
+                loader.remove();
+                btn.disabled = false;
             }
         });
 

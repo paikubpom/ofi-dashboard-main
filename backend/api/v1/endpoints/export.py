@@ -45,9 +45,9 @@ async def export_pdf_post(
         nocache=nocache,
         filename=f"PTT_OFI_{role.upper()}_Report_{int(time.time())}.pdf",
         content_type="application/pdf",
-        local_state=payload.get("localState", {}),
-        session_state=payload.get("sessionState", {}),
-        dom_state=payload.get("domState", []),
+        local_state=payload.get("local_state") or payload.get("localState") or {},
+        session_state=payload.get("session_state") or payload.get("sessionState") or {},
+        dom_state=payload.get("dom_state") or payload.get("domState") or [],
     )
 
 @router.post("/export-jpg/{role}")
@@ -70,7 +70,7 @@ async def export_jpg(
         nocache=nocache,
         filename=f"PTT_OFI_{role.upper()}_Report_{int(time.time())}.jpg",
         content_type="image/jpeg",
-        local_state=payload.get("localState", {}),
-        session_state=payload.get("sessionState", {}),
-        dom_state=payload.get("domState", []),
+        local_state=payload.get("local_state") or payload.get("localState") or {},
+        session_state=payload.get("session_state") or payload.get("sessionState") or {},
+        dom_state=payload.get("dom_state") or payload.get("domState") or [],
     )
