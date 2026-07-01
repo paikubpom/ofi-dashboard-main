@@ -124,7 +124,7 @@
     position: sticky;
     top: 1rem;
     z-index: 100;
-    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: box-shadow 0.15s ease-out, background-color 0.15s ease-out, border-radius 0.15s ease-out !important;
     background: rgba(255, 255, 255, 0.96) !important;
     backdrop-filter: blur(24px) saturate(120%) !important;
     -webkit-backdrop-filter: blur(24px) saturate(120%) !important;
@@ -142,7 +142,7 @@
 }
 
 #global-header header {
-    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: padding 0.15s ease-out !important;
     background: transparent !important;
     border: none !important;
     border-bottom: 1px solid rgba(226, 232, 240, 0.5) !important; /* divider line */
@@ -192,7 +192,7 @@
 
 /* Smooth collapse of the blue filter header bar */
 #sticky-filter-wrapper .filter-header-bar {
-    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: max-height 0.15s ease-out, opacity 0.15s ease-out, padding 0.15s ease-out !important;
     max-height: 100px;
     opacity: 1;
 }
@@ -207,7 +207,7 @@
 
 /* Compact filter body padding */
 #sticky-filter-wrapper .filter-content-body {
-    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: padding 0.15s ease-out !important;
 }
 
 .page-scrolled #sticky-filter-wrapper .filter-content-body {
@@ -216,7 +216,7 @@
 
 /* Shrink grid spacing */
 #sticky-filter-wrapper .filter-grid-layout {
-    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    /* No structural transition to prevent CPU reflow lag during scroll */
 }
 
 .page-scrolled #sticky-filter-wrapper .filter-grid-layout {
@@ -225,7 +225,7 @@
 
 /* Smooth transition of labels to save vertical height but keep them visible as tiny sub-headers */
 #sticky-filter-wrapper .filter-grid-layout label {
-    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: max-height 0.15s ease-out, opacity 0.15s ease-out, margin-bottom 0.15s ease-out !important;
     max-height: 30px;
     opacity: 1;
     overflow: hidden;
@@ -244,7 +244,7 @@
 /* Make selects and inputs compact */
 #sticky-filter-wrapper .filter-grid-layout select,
 #sticky-filter-wrapper .filter-grid-layout input {
-    transition: all 0.3s ease;
+    /* No transition to keep it light */
 }
 
 .page-scrolled #sticky-filter-wrapper .filter-grid-layout select,
@@ -257,7 +257,7 @@
 
 /* Compact Search and Reset Buttons Row */
 #sticky-filter-wrapper .filter-actions-row {
-    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    /* No transition to prevent CPU reflow lag */
 }
 
 .page-scrolled #sticky-filter-wrapper .filter-actions-row {
