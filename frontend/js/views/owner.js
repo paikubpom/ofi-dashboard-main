@@ -71,33 +71,38 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
     });
 
     // ประกอบโครงสร้าง HTML พื้นฐาน (ฟิลเตอร์ + กริดกราฟ + ตารางข้อมูลดิบ)
-    appInstance.contentDiv.innerHTML = `
-        <!-- 2. แถบตัวกรองข้อมูลอัจฉริยะ (Interactive Filters) -->
-        <div id="sticky-filter-wrapper" class="mb-6">
+    const headerEl = document.getElementById('global-header');
+    if (headerEl) {
+        const oldFilter = headerEl.querySelector('#sticky-filter-wrapper');
+        if (oldFilter) oldFilter.remove();
+
+        const filterDiv = document.createElement('div');
+        filterDiv.id = 'sticky-filter-wrapper';
+        filterDiv.innerHTML = `
             <div class="glass-card rounded-3xl border border-slate-200 shadow-sm overflow-hidden animate-fade-in-up">
-                <div class="bg-[#00508F] px-5 py-3.5 flex items-center gap-2 filter-header-bar">
-                    <span class="text-white text-lg">🔍</span>
-                    <span class="text-white font-bold text-sm tracking-wide">กรองข้อมูล (Filters)</span>
+                <div class="bg-[#00508F] px-4 py-2 flex items-center gap-2 filter-header-bar">
+                    <span class="text-white text-sm">🔍</span>
+                    <span class="text-white font-bold text-xs tracking-wide">กรองข้อมูล (Filters)</span>
                 </div>
                 <div class="p-5 space-y-4 filter-content-body">
                     <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 filter-grid-layout">
                         <div>
                             <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">หมวด (Module)</label>
-                            <select id="filter-module" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                            <select id="filter-module" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#00508F] focus:ring-2 focus:ring-[#00508F]/10 transition-colors">
                                 <option value="">ทั้งหมด (All)</option>
                                 ${modulesList.map(m => `<option value="${m}">${m}</option>`).join('')}
                             </select>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">ผู้ดูแล (Owner)</label>
-                            <select id="filter-owner" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                            <select id="filter-owner" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#00508F] focus:ring-2 focus:ring-[#00508F]/10 transition-colors">
                                 <option value="">ทั้งหมด (All)</option>
                                 ${ownersList.map(o => `<option value="${o}" ${o === ownerName ? 'selected' : ''}>${o}</option>`).join('')}
                             </select>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">สถานะ (Status)</label>
-                            <select id="filter-status" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                            <select id="filter-status" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#00508F] focus:ring-2 focus:ring-[#00508F]/10 transition-colors">
                                 <option value="">ทั้งหมด (All)</option>
                                 <option value="progress">In Progress</option>
                                 <option value="done">Done / Qualified</option>
@@ -107,27 +112,30 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">ระดับความยาก (Level)</label>
-                            <select id="filter-level" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                            <select id="filter-level" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#00508F] focus:ring-2 focus:ring-[#00508F]/10 transition-colors">
                                 <option value="">ทั้งหมด (All)</option>
-                                ${levelsList.map(l => `<option value="${l}">L${l}</option>`).join('')}
+                                ${levelsList.map(l => `<option value="${l}">${l}</option>`).join('')}
                             </select>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wide">ปีประเมิน (Year)</label>
-                            <select id="filter-year" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                            <select id="filter-year" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#00508F] focus:ring-2 focus:ring-[#00508F]/10 transition-colors">
                                 <option value="">ทั้งหมด (All)</option>
                                 ${yearsList.map(y => `<option value="${y}">${y}</option>`).join('')}
                             </select>
                         </div>
                     </div>
                     <div class="flex gap-2 filter-actions-row">
-                        <input type="text" id="filter-search" placeholder="🔎 ค้นหาหัวข้อ, รายละเอียด OFI, หรือรหัส..." class="w-full px-4 py-2.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                        <input type="text" id="filter-search" placeholder="🔎 ค้นหาหัวข้อ, รายละเอียด OFI, หรือรหัส..." class="w-full px-4 py-2.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#00508F] focus:ring-2 focus:ring-[#00508F]/10 transition-colors">
                         <button id="filter-reset-btn" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 text-xs font-bold rounded-xl transition-all border border-slate-200">รีเซ็ต</button>
                     </div>
                 </div>
             </div>
-        </div>
+        `;
+        headerEl.appendChild(filterDiv);
+    }
 
+    appInstance.contentDiv.innerHTML = `
         <div id="kpi-cards-wrapper" class="mb-6">
             ${appInstance.getKpiHtml()}
         </div>
@@ -145,7 +153,7 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
                 <div class="flex items-center gap-3 w-full sm:w-auto self-stretch sm:self-auto justify-between sm:justify-end">
                     <div class="flex items-center gap-2 shrink-0">
                         <span class="text-xs font-bold text-slate-500 whitespace-nowrap">หัวข้อใหญ่:</span>
-                        <select id="filter-topic-group" class="px-2.5 py-1 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                        <select id="filter-topic-group" class="px-2.5 py-1 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#00508F] focus:ring-2 focus:ring-[#00508F]/10 transition-colors">
                             <option value="">ทั้งหมด (All)</option>
                             ${mainTopicsList.map(t => `<option value="${t}">${t}</option>`).join('')}
                         </select>
@@ -227,6 +235,7 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
 
     // --- ฟังก์ชันหลักในการคัดกรองข้อมูล และอัปเดต Dashboard ---
     const updateDashboard = () => {
+        const currentScrollY = window.scrollY;
         clearCharts();
         buildChartGridElements();
 
@@ -424,7 +433,7 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
                             if (rStat !== 'not started') return false;
                         }
                     }
-                    if (localFilters.level && o.ofiLevel !== localFilters.level) return false;
+                    if (localFilters.level && (o.ofiLevel || getRecordLevel(o)) != localFilters.level) return false;
                     return true;
                 });
 
@@ -485,28 +494,28 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
                     <!-- Popup Filter Bar -->
                     <div class="bg-white/40 border border-white/60 shadow-sm backdrop-blur-md p-4 rounded-2xl flex flex-wrap gap-3 items-center">
                         <span class="text-xs font-bold text-slate-500 flex items-center gap-1">🔎 ตัวกรองด่วน:</span>
-                        <select id="popup-filter-module" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400">
+                        <select id="popup-filter-module" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#00508F] focus:ring-2 focus:ring-[#00508F]/10">
                             <option value="">หมวด: ทั้งหมด</option>
                             ${modulesList.map(m => `<option value="${m}">${m}</option>`).join('')}
                         </select>
-                        <select id="popup-filter-topic-group" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400">
+                        <select id="popup-filter-topic-group" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#00508F] focus:ring-2 focus:ring-[#00508F]/10">
                             <option value="">หัวข้อใหญ่: ทั้งหมด</option>
                             ${mainTopicsList.map(t => `<option value="${t}" ${t === localFilters.topicGroup ? 'selected' : ''}>${t}</option>`).join('')}
                         </select>
-                        <select id="popup-filter-owner" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400">
+                        <select id="popup-filter-owner" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#00508F] focus:ring-2 focus:ring-[#00508F]/10">
                             <option value="">ผู้ดูแล: ทั้งหมด</option>
                             ${ownersList.map(o => `<option value="${o}" ${o === localFilters.owner ? 'selected' : ''}>${o}</option>`).join('')}
                         </select>
-                        <select id="popup-filter-status" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400">
+                        <select id="popup-filter-status" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#00508F] focus:ring-2 focus:ring-[#00508F]/10">
                             <option value="">สถานะ: ทั้งหมด</option>
                             <option value="progress">In Progress</option>
                             <option value="done">Done</option>
                             <option value="delayed">Delayed</option>
                             <option value="not started">Not Started</option>
                         </select>
-                        <select id="popup-filter-level" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400">
+                        <select id="popup-filter-level" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#00508F] focus:ring-2 focus:ring-[#00508F]/10">
                             <option value="">ระดับ: ทั้งหมด</option>
-                            ${levelsList.map(l => `<option value="${l}">L${l}</option>`).join('')}
+                            ${levelsList.map(l => `<option value="${l}">${l}</option>`).join('')}
                         </select>
                         <div class="ml-auto text-xs font-bold text-[#00508F] bg-blue-50 px-3 py-1 rounded-full border border-blue-100 whitespace-nowrap" id="popup-total-count-badge">แสดง ${filteredRecords.length} รายการ</div>
                     </div>
@@ -574,11 +583,15 @@ export function renderOwnerView(appInstance, chartSettings = {}, currentRole = '
 
         const btnOpen = document.getElementById('btn-open-ofi-popup');
         if (btnOpen) {
-            btnOpen.addEventListener('click', showOfisPopup);
+            btnOpen.onclick = showOfisPopup;
         }
         const badgeOpen = document.getElementById('table-total-count');
         if (badgeOpen) {
-            badgeOpen.addEventListener('click', showOfisPopup);
+            badgeOpen.onclick = showOfisPopup;
+        }
+
+        if (currentScrollY > 0) {
+            window.scrollTo(0, currentScrollY);
         }
     };
 

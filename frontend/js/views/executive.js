@@ -35,60 +35,68 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
     const yearsList = [...new Set(rawRecords.map(r => r.assessment_year).filter(Boolean))].sort();
     const statusList = [...new Set(rawRecords.map(r => r.status).filter(Boolean))].sort();
 
-    appInstance.contentDiv.innerHTML = `
-        <!-- Filter Panel -->
-        <div id="sticky-filter-wrapper" class="mb-6">
+    const headerEl = document.getElementById('global-header');
+    if (headerEl) {
+        const oldFilter = headerEl.querySelector('#sticky-filter-wrapper');
+        if (oldFilter) oldFilter.remove();
+
+        const filterDiv = document.createElement('div');
+        filterDiv.id = 'sticky-filter-wrapper';
+        filterDiv.innerHTML = `
             <div class="glass-card rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden animate-fade-in-up">
-                <div class="bg-[#00508F] px-5 py-3.5 flex items-center gap-2 filter-header-bar">
-                    <span class="text-white text-lg">🔍</span>
-                    <span class="text-white font-bold text-sm tracking-wide">กรองข้อมูล</span>
+                <div class="bg-[#00508F] px-4 py-2 flex items-center gap-2 filter-header-bar">
+                    <span class="text-white text-sm">🔍</span>
+                    <span class="text-white font-bold text-xs tracking-wide">กรองข้อมูล</span>
                 </div>
                 <div class="p-5 space-y-4 filter-content-body">
                     <div class="grid grid-cols-1 sm:grid-cols-5 gap-4 filter-grid-layout">
                         <div>
                             <label class="block text-[11px] font-bold text-slate-400 mb-1 uppercase tracking-wide">หมวด</label>
-                            <select id="filter-module" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                            <select id="filter-module" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#00508F] focus:ring-2 focus:ring-[#00508F]/10 transition-colors">
                                 <option value="">ทั้งหมด (All)</option>
                                 ${modulesList.map(m => `<option value="${m}">${m}</option>`).join('')}
                             </select>
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold text-slate-400 mb-1 uppercase tracking-wide">สถานะ</label>
-                            <select id="filter-status" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                            <select id="filter-status" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#00508F] focus:ring-2 focus:ring-[#00508F]/10 transition-colors">
                                 <option value="">ทั้งหมด (All)</option>
                                 ${statusList.map(s => `<option value="${s}">${s}</option>`).join('')}
                             </select>
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold text-slate-400 mb-1 uppercase tracking-wide">ระดับ</label>
-                            <select id="filter-level" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                            <select id="filter-level" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#00508F] focus:ring-2 focus:ring-[#00508F]/10 transition-colors">
                                 <option value="">ทั้งหมด (All)</option>
-                                ${levelsList.map(l => `<option value="${l}">L${l}</option>`).join('')}
+                                ${levelsList.map(l => `<option value="${l}">${l}</option>`).join('')}
                             </select>
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold text-slate-400 mb-1 uppercase tracking-wide">ปีประเมิน</label>
-                            <select id="filter-year" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                            <select id="filter-year" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#00508F] focus:ring-2 focus:ring-[#00508F]/10 transition-colors">
                                 <option value="">ทั้งหมด (All)</option>
                                 ${yearsList.map(y => `<option value="${y}">${y}</option>`).join('')}
                             </select>
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold text-slate-400 mb-1 uppercase tracking-wide">ผู้ดูแล</label>
-                            <select id="filter-owner" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors">
+                            <select id="filter-owner" class="w-full px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#00508F] focus:ring-2 focus:ring-[#00508F]/10 transition-colors">
                                 <option value="">ทั้งหมด (All)</option>
                                 ${ownersList.map(o => `<option value="${o}">${o}</option>`).join('')}
                             </select>
                         </div>
                     </div>
                     <div class="flex gap-2 filter-actions-row">
-                        <input type="text" id="filter-search" placeholder="ค้นหาหัวข้อ, รายละเอียด OFI, หรือผู้รับผิดชอบ..." class="flex-1 px-4 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-colors shadow-inner">
+                        <input type="text" id="filter-search" placeholder="ค้นหาหัวข้อ, รายละเอียด OFI, หรือผู้รับผิดชอบ..." class="flex-1 px-4 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#00508F] focus:ring-2 focus:ring-[#00508F]/10 transition-colors shadow-inner">
                         <button id="filter-reset-btn" class="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 text-xs font-bold rounded-xl transition-all border border-slate-200">รีเซ็ต</button>
                     </div>
                 </div>
             </div>
-        </div>
+        `;
+        headerEl.appendChild(filterDiv);
+    }
 
+    appInstance.contentDiv.innerHTML = `
         <!-- KPI Cards Grid -->
         <div id="kpi-cards-wrapper" class="grid grid-cols-1 sm:grid-cols-4 gap-6 mb-6"></div>
 
@@ -122,6 +130,7 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
     const paginationWrapper = document.getElementById('table-pagination-controls');
 
     const updateDashboard = () => {
+        const currentScrollY = window.scrollY;
         // Filter records
         const filteredRecords = rawRecords.filter(r => {
             if (currentFilters.modules.length > 0 && !currentFilters.modules.includes(r.module)) return false;
@@ -295,8 +304,8 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
                 const filtered = filteredRecords.filter(r => {
                     if (localFilters.source && r.source !== localFilters.source) return false;
                     if (localFilters.status && r.status !== localFilters.status) return false;
-                    if (localFilters.level && r.level !== localFilters.level) return false;
-                    if (localFilters.year && r.assessment_year !== localFilters.year) return false;
+                    if (localFilters.level && r.level != localFilters.level) return false;
+                    if (localFilters.year && r.assessment_year != localFilters.year) return false;
                     if (localFilters.owner && r.owner !== localFilters.owner) return false;
                     return true;
                 });
@@ -379,23 +388,23 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
                     <!-- Popup Filter Bar -->
                     <div class="bg-white/40 border border-white/60 shadow-sm backdrop-blur-md p-4 rounded-2xl flex flex-wrap gap-3 items-center">
                         <span class="text-xs font-bold text-slate-500 flex items-center gap-1">🔎 ตัวกรองด่วน:</span>
-                        <select id="popup-filter-source" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400">
+                        <select id="popup-filter-source" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#00508F] focus:ring-2 focus:ring-[#00508F]/10">
                             <option value="">แหล่งที่มา: ทั้งหมด</option>
                             ${sourcesList.map(s => `<option value="${s}">${s}</option>`).join('')}
                         </select>
-                        <select id="popup-filter-status" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400">
+                        <select id="popup-filter-status" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#00508F] focus:ring-2 focus:ring-[#00508F]/10">
                             <option value="">สถานะ: ทั้งหมด</option>
                             ${statusesList.map(s => `<option value="${s}">${s}</option>`).join('')}
                         </select>
-                        <select id="popup-filter-level" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400">
+                        <select id="popup-filter-level" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#00508F] focus:ring-2 focus:ring-[#00508F]/10">
                             <option value="">ระดับ: ทั้งหมด</option>
                             ${levelsList.map(l => `<option value="${l}">${l}</option>`).join('')}
                         </select>
-                        <select id="popup-filter-year" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400">
+                        <select id="popup-filter-year" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#00508F] focus:ring-2 focus:ring-[#00508F]/10">
                             <option value="">ปีประเมิน: ทั้งหมด</option>
                             ${yearsList.map(y => `<option value="${y}">${y}</option>`).join('')}
                         </select>
-                        <select id="popup-filter-owner" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-400">
+                        <select id="popup-filter-owner" class="px-2 py-1.5 text-[11px] font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#00508F] focus:ring-2 focus:ring-[#00508F]/10">
                             <option value="">ผู้ดูแล: ทั้งหมด</option>
                             ${ownersList.map(o => `<option value="${o}">${o}</option>`).join('')}
                         </select>
@@ -469,7 +478,11 @@ export function renderExecutiveView(appInstance, chartSettings = {}, currentRole
 
         const btnOpen = document.getElementById('btn-open-projects-popup');
         if (btnOpen) {
-            btnOpen.addEventListener('click', showProjectsPopup);
+            btnOpen.onclick = showProjectsPopup;
+        }
+
+        if (currentScrollY > 0) {
+            window.scrollTo(0, currentScrollY);
         }
     };
 

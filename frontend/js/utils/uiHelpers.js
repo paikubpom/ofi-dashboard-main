@@ -555,7 +555,7 @@ export function getSharedHeaderHtml(roleTitle, dotColorClass = 'bg-blue-500', sh
                 </div>
             </div>
 
-            <div class="flex flex-col sm:items-end gap-2.5 w-full sm:w-auto shrink-0">
+            <div id="export-button-target" class="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto shrink-0 justify-end">
                 ${timeHtml}
                 ${buttonHtml}
             </div>

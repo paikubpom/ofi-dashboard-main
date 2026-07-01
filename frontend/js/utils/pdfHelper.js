@@ -159,6 +159,15 @@ export function initGlobalPdfExport(roleName) {
     };
 
     const injectButtonToHeader = () => {
+        const targetWrapper = document.getElementById('export-button-target');
+        if (targetWrapper) {
+            if (document.getElementById('download-pdf-btn')) return;
+            const wrapper = createExportButton();
+            if (!wrapper) return;
+            targetWrapper.appendChild(wrapper);
+            return;
+        }
+
         const headerContainer = document.getElementById('global-header');
         if (!headerContainer || headerContainer.innerHTML.trim() === "") return;
         if (document.getElementById('download-pdf-btn')) return;
@@ -167,6 +176,7 @@ export function initGlobalPdfExport(roleName) {
         let timestampBox = null;
 
         for (let el of allElements) {
+            if (el.closest('#sticky-filter-wrapper')) continue;
             if (el.textContent.includes('อัปเดตล่าสุด') || el.textContent.includes('น.')) {
                 if (el.children.length === 0 || el.tagName === 'SPAN' || el.className.includes('text-')) timestampBox = el;
             }
@@ -175,11 +185,14 @@ export function initGlobalPdfExport(roleName) {
         if (timestampBox) {
             const wrapper = createExportButton();
             if (!wrapper) return;
-            const targetWrapper = timestampBox.closest('div') || timestampBox.parentNode;
-            targetWrapper.style.display = 'flex';
-            targetWrapper.style.alignItems = 'center';
-            targetWrapper.style.justifyContent = 'end';
-            targetWrapper.appendChild(wrapper);
+            const badgeDiv = timestampBox.closest('div') || timestampBox.parentNode;
+            const targetWrapperFallback = badgeDiv.parentNode || badgeDiv;
+            targetWrapperFallback.style.display = 'flex';
+            targetWrapperFallback.style.flexDirection = 'row';
+            targetWrapperFallback.style.alignItems = 'center';
+            targetWrapperFallback.style.justifyContent = 'end';
+            targetWrapperFallback.style.gap = '0.75rem';
+            targetWrapperFallback.appendChild(wrapper);
         }
     };
 

@@ -119,19 +119,37 @@
    ========================================================================== */
 
 /* 1. Header Sticky & Shrink */
+/* 1. Unified Header and Filter Container */
 #global-header {
     position: sticky;
     top: 1rem;
     z-index: 100;
     transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    background: rgba(255, 255, 255, 0.96) !important;
+    backdrop-filter: blur(24px) saturate(120%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(120%) !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important; /* border-slate-200/80 */
+    border-radius: 1.5rem !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 80, 143, 0.06), 0 8px 10px -6px rgba(0, 80, 143, 0.06) !important;
+    overflow: hidden;
+    overflow-anchor: none;
 }
 
 .page-scrolled #global-header {
     top: 0.5rem;
+    border-radius: 1.25rem !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 80, 143, 0.08) !important;
 }
 
 #global-header header {
     transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.5) !important; /* divider line */
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding-top: 1.25rem !important;
+    padding-bottom: 1.25rem !important;
 }
 
 .page-scrolled #global-header header {
@@ -139,12 +157,6 @@
     padding-bottom: 0.65rem !important;
     padding-left: 1.5rem !important;
     padding-right: 1.5rem !important;
-    border-radius: 1.25rem !important;
-    background: rgba(255, 255, 255, 0.88) !important;
-    backdrop-filter: blur(20px) saturate(120%) !important;
-    -webkit-backdrop-filter: blur(20px) saturate(120%) !important;
-    border-color: rgba(255, 255, 255, 0.5) !important;
-    box-shadow: 0 10px 25px -5px rgba(0, 80, 143, 0.08), 0 8px 10px -6px rgba(0, 80, 143, 0.08) !important;
 }
 
 .page-scrolled #global-header img {
@@ -159,29 +171,23 @@
     height: 1.5rem !important; /* Shrink Divider */
 }
 
-/* 2. Filter Bar Sticky & Shrink */
-#sticky-filter-wrapper {
-    position: sticky;
-    top: 7.75rem; /* Sits right below the expanded header */
-    z-index: 90;
-    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+/* 2. Filter Bar integration inside Unified Header */
+#global-header #sticky-filter-wrapper {
+    position: static !important; /* Flows inline inside global-header card */
+    z-index: auto !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
 }
 
-.page-scrolled #sticky-filter-wrapper {
-    top: 4.6rem; /* Move up to dock below shrunken header */
-}
-
-#sticky-filter-wrapper > .glass-card {
-    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.page-scrolled #sticky-filter-wrapper > .glass-card {
-    border-radius: 1.25rem !important;
-    background: rgba(255, 255, 255, 0.92) !important;
-    backdrop-filter: blur(20px) saturate(120%) !important;
-    -webkit-backdrop-filter: blur(20px) saturate(120%) !important;
-    border-color: rgba(255, 255, 255, 0.5) !important;
-    box-shadow: 0 10px 25px -5px rgba(0, 80, 143, 0.08) !important;
+#global-header #sticky-filter-wrapper > .glass-card {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }
 
 /* Smooth collapse of the blue filter header bar */
